@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-export default function ProfilePage() {
+function ProfileContent() {
     const { data: session, update } = useSession();
     const [name, setName] = useState('');
     const [image, setImage] = useState('');
@@ -213,5 +213,17 @@ export default function ProfilePage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function ProfilePage() {
+    return (
+        <Suspense fallback={
+            <div style={{ display: 'flex', width: '100%', height: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-color)', color: 'var(--text-main)' }}>
+                Loading Profile...
+            </div>
+        }>
+            <ProfileContent />
+        </Suspense>
     );
 }

@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Sidebar from '../components/Sidebar';
 import ChatArea from '../components/ChatArea';
 import InputArea from '../components/InputArea';
 
-export default function Home() {
+function ChatContent() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -156,5 +156,17 @@ export default function Home() {
                 <InputArea onSend={handleSendMessage} loading={loading} />
             </main>
         </div>
+    );
+}
+
+export default function Home() {
+    return (
+        <Suspense fallback={
+            <div style={{ display: 'flex', width: '100%', height: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-color)', color: 'var(--text-main)' }}>
+                Loading Chat...
+            </div>
+        }>
+            <ChatContent />
+        </Suspense>
     );
 }
