@@ -1,9 +1,9 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient(); // Best to put this in a lib file, but inline for simplicity in MVP steps
+export const dynamic = 'force-dynamic';
 
 export const authOptions = {
     providers: [
