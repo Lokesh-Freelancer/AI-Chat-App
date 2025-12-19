@@ -1,35 +1,44 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]/route";
 
 export async function POST(req) {
     try {
         const { message, history } = await req.json();
         const apiKey = process.env.GEMINI_API_KEY;
+        const session = await getServerSession(authOptions);
+        const userName = session?.user?.name || "User";
 
         if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
             return NextResponse.json(
                 { reply: "Please set your Valid GEMINI_API_KEY in the .env file." },
-                { status: 200 } // Return 200 so it shows as a message
+                { status: 200 }
             );
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash-lite",
+            model: "gemini-1.5-flash", // Stable version
+            systemInstruction: `You are Promptly AI, a premium and helpful AI assistant. You are talking to ${userName}. Always be polite, concise, and helpful. Mention their name occasionally to stay personal.`,
             generationConfig: {
-                maxOutputTokens: 10000,
-                temperature: 0.7, // Jitna zyada, utna creative response
+                maxOutputTokens: 2000,
+                temperature: 0.8,
             },
         });
 
-        // Convert history to Gemini format if needed, but for simple MVP 
-        // we might just send the last message or construct a prompt.
-        // For a better chat experience, we should send history.
-        // Gemini expects: { role: "user" | "model", parts: [{ text: "..." }] }
+        // Gemini expects: [ { role: "user", parts: [{ text: "..." }] }, { role: "model", parts: [{ text: "..." }] } ]
+        // Map history (role: 'user'/'ai', text: '...') to Gemini format
+        const chatHistory = history ? history.map(msg => ({
+            role: msg.role === 'user' ? 'user' : 'model',
+            parts: [{ text: msg.text }]
+        })) : [];
 
-        // Simple 1-turn chat for stability first
-        // const result = await model.generateContent(message);
-        const result = await model.generateContent(message);
+        const chat = model.startChat({
+            history: chatHistory,
+        });
+
+        const result = await chat.sendMessage(message);
         const response = await result.response;
         const text = response.text();
 

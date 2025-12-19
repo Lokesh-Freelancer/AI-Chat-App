@@ -16,6 +16,11 @@ function ChatContent() {
     const [loading, setLoading] = useState(false);
     const scrollRef = useRef(null);
 
+    const getGreeting = () => {
+        const name = session?.user?.name || 'there';
+        return `Hello ${name}, how can I help you today?`;
+    };
+
     // Init from URL
     useEffect(() => {
         const urlChatId = searchParams.get('chatId');
@@ -36,9 +41,9 @@ function ChatContent() {
         if (currentChatId) {
             fetchMessages(currentChatId);
         } else {
-            setMessages([{ id: 'welcome', role: 'ai', text: 'Hello! How can I help you today?' }]);
+            setMessages([{ id: 'welcome', role: 'ai', text: getGreeting() }]);
         }
-    }, [currentChatId]);
+    }, [currentChatId, session?.user?.name]);
 
     const fetchMessages = async (chatId) => {
         try {
@@ -47,7 +52,18 @@ function ChatContent() {
                 const data = await res.json();
                 // Map DB message format to UI format
                 const uiMessages = data.map(m => ({ id: m.id, role: m.role, text: m.content }));
-                setMessages(uiMessages);
+
+                // Only update if we're not currently in the middle of an optimistic AI response
+                // or if the chat actually changed.
+                setMessages(prev => {
+                    const hasOptimisticAI = prev.some(m => typeof m.id === 'number' && m.role === 'ai');
+                    if (hasOptimisticAI && currentChatId === chatId) return prev;
+
+                    return [
+                        { id: 'welcome', role: 'ai', text: getGreeting() },
+                        ...uiMessages
+                    ];
+                });
             }
         } catch (err) {
             console.error("Failed to load messages");
