@@ -1,0 +1,119 @@
+import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { NextResponse } from "next/server";
+
+// GET: Fetch messages for a chat
+export async function GET(req, { params }) {
+    const session = await getServerSession(authOptions);
+    const chatId = params.id;
+
+    if (!session) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Verify chat belongs to user
+    const chat = await prisma.chat.findUnique({
+        where: { id: chatId },
+        select: { userId: true }
+    });
+
+    if (!chat || chat.userId !== session.user.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const messages = await prisma.message.findMany({
+        where: { chatId },
+        orderBy: { createdAt: 'asc' }
+    });
+
+    return NextResponse.json(messages);
+}
+
+// POST: Add message to chat (User or AI)
+export async function POST(req, { params }) {
+    const session = await getServerSession(authOptions);
+    const chatId = params.id;
+
+    if (!session) {
+        // If mocking AI writing back, we might need to bypass session check or have a service key.
+        // However, for this architecture, we assume the Client sends the AI response to be saved 
+        // OR this route invokes the AI.
+        // Design choice: Client calls /api/chat (AI), getting a response.
+        // Client THEN calls this route to save User msg AND AI msg.
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    try {
+        const { role, content } = await req.json();
+
+        const message = await prisma.message.create({
+            data: {
+                chatId,
+                role,
+                content
+            }
+        });
+
+        // Update chat timestamp
+        await prisma.chat.update({
+            where: { id: chatId },
+            data: { updatedAt: new Date() }
+        });
+
+        return NextResponse.json(message);
+    } catch (error) {
+        return NextResponse.json({ error: "Failed to save message" }, { status: 500 });
+    }
+}
+
+// PATCH: Rename chat
+export async function PATCH(req, { params }) {
+    const session = await getServerSession(authOptions);
+    const chatId = params.id;
+
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    try {
+        const { title } = await req.json();
+
+        // Verify ownership
+        const chat = await prisma.chat.findUnique({ where: { id: chatId }, select: { userId: true } });
+        if (!chat || chat.userId !== session.user.id) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
+        const updatedChat = await prisma.chat.update({
+            where: { id: chatId },
+            data: { title }
+        });
+
+        return NextResponse.json(updatedChat);
+    } catch (error) {
+        return NextResponse.json({ error: "Failed to update chat" }, { status: 500 });
+    }
+}
+
+// DELETE: Delete chat
+export async function DELETE(req, { params }) {
+    const session = await getServerSession(authOptions);
+    const chatId = params.id;
+
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    try {
+        // Verify ownership
+        const chat = await prisma.chat.findUnique({ where: { id: chatId }, select: { userId: true } });
+        if (!chat || chat.userId !== session.user.id) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
+        await prisma.chat.delete({
+            where: { id: chatId }
+        });
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        return NextResponse.json({ error: "Failed to delete chat" }, { status: 500 });
+    }
+}
