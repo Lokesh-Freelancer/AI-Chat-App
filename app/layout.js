@@ -11,28 +11,28 @@ export const viewport = {
 };
 
 export const metadata = {
-  metadataBase: new URL('https://your-chat-domain.com'), // Replace with actual domain
+  metadataBase: new URL('https://promptly-ai.vercel.app'), // Replace with actual domain
   title: {
-    default: 'AI Chat App - Smart Assistant',
-    template: '%s | AI Chat App',
+    default: 'Promptly AI - Smart Assistant',
+    template: '%s | Promptly AI',
   },
-  description: 'Experience the future of communication with our Premium AI Chat App. Powered by advanced Gemini models, featuring code highlighting, persistent history, and a beautiful dark mode UI.',
-  keywords: ['AI', 'Chat', 'Gemini', 'Artificial Intelligence', 'Coding Assistant', 'Next.js', 'Premium UI'],
-  authors: [{ name: 'Your Name' }],
-  creator: 'Your Team',
+  description: 'Experience the future of communication with Promptly AI. Powered by advanced Gemini models, featuring code highlighting, persistent history, and a beautiful dark mode UI.',
+  keywords: ['AI', 'Chat', 'Gemini', 'Promptly AI', 'Assistant'],
+  authors: [{ name: 'Lokesh' }],
+  creator: 'Promptly AI Team',
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: '/',
-    title: 'AI Chat App - Your Intelligent Companion',
+    title: 'Promptly AI - Your Intelligent Companion',
     description: 'Chat with consistency. Save your history. Generate code. All in one premium interface.',
-    siteName: 'AI Chat App',
+    siteName: 'Promptly AI',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AI Chat App - Smart Assistant',
+    title: 'Promptly AI - Smart Assistant',
     description: 'Experience the future of communication with advanced AI.',
-    creator: '@yourhandle',
+    creator: '@lokesh',
   },
   icons: {
     icon: '/favicon.ico',

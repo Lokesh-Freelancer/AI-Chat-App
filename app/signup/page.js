@@ -48,7 +48,8 @@ export default function SignupPage() {
                 borderRadius: '1rem',
                 border: '1px solid var(--border-color)',
             }}>
-                <h1 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', textAlign: 'center' }}>Create Account</h1>
+                <h1 style={{ marginBottom: '0.5rem', fontSize: '1.8rem', textAlign: 'center', fontWeight: 'bold', color: 'var(--primary-color)' }}>Promptly AI</h1>
+                <h2 style={{ marginBottom: '1.5rem', fontSize: '1.1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Create Account</h2>
                 {error && <div style={{ color: '#ff6b6b', marginBottom: '1rem' }}>{error}</div>}
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <input

@@ -146,6 +146,12 @@ export default function Sidebar({ onSelectChat, currentChatId }) {
             transition: 'width 0.3s ease',
             flexShrink: 0
         }}>
+            {/* Brand Logo */}
+            <div style={{ padding: '15px 10px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#131314', fontWeight: 'bold', fontSize: '1.2rem' }}>P</div>
+                <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text-main)', margin: 0 }}>Promptly AI</h1>
+            </div>
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <div
                     onClick={handleNewChat}
