@@ -52,7 +52,12 @@ function ChatContent() {
                 const data = await res.json();
                 // Map DB message format to UI format
                 const uiMessages = data.map(m => ({ id: m.id, role: m.role, text: m.content }));
-                setMessages(uiMessages);
+
+                // Always prepend the welcome message to the fetched history
+                setMessages([
+                    { id: 'welcome', role: 'ai', text: getGreeting() },
+                    ...uiMessages
+                ]);
             }
         } catch (err) {
             console.error("Failed to load messages");
@@ -102,7 +107,7 @@ function ChatContent() {
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text }),
+                body: JSON.stringify({ message: text, history: session ? messages : [] }),
             });
 
             const data = await response.json();
@@ -132,7 +137,7 @@ function ChatContent() {
             }
         } catch (error) {
             console.error('Error:', error);
-            setMessages(prev => [...prev, { id: Date.now() + 1, role: 'ai', text: "Sorry, I encountered an error." }]);
+            setMessages(prev => [...prev, { id: Date.now() + 1, role: 'ai', text: `Error: ${error.message || "I encountered an error."}` }]);
         } finally {
             setLoading(false);
         }
