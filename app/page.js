@@ -109,34 +109,40 @@ function ChatContent() {
                 }
             }
 
-            // 3. Get AI Response
+            // 3. Get AI Response (Streaming)
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text, history: session ? messages : [] }), // Send history if authenticated ideally
+                body: JSON.stringify({ message: text, history: session ? messages : [] }),
             });
 
-            const data = await response.json();
-            const aiText = data.reply;
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.reply || 'Failed to get AI response');
+            }
 
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let aiText = '';
 
-            // Streaming Simulation
+            // Create a placeholder message for AI
             const aiMsgId = Date.now() + 1;
             setMessages(prev => [...prev, { id: aiMsgId, role: 'ai', text: '' }]);
 
-            let currentText = '';
-            // Split by words/spaces to simulate typing, or char for more smoothness but slower
-            // Using small chunks for balance
-            const chunks = aiText.match(/(.|[\r\n]){1,4}/g) || [];
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
 
-            for (const chunk of chunks) {
-                currentText += chunk;
-                setMessages(prev => prev.map(msg => msg.id === aiMsgId ? { ...msg, text: currentText } : msg));
-                // Small delay
-                await new Promise(resolve => setTimeout(resolve, 15));
+                const chunk = decoder.decode(value, { stream: true });
+                aiText += chunk;
+
+                // Update UI in real-time
+                setMessages(prev => prev.map(msg =>
+                    msg.id === aiMsgId ? { ...msg, text: aiText } : msg
+                ));
             }
 
-            // 4. Save AI Message to DB
+            // 4. Save AI Message to DB after stream finishes
             if (chatId && session) {
                 await fetch(`/api/chats/${chatId}`, {
                     method: 'POST',
@@ -146,7 +152,7 @@ function ChatContent() {
             }
         } catch (error) {
             console.error('Error:', error);
-            setMessages(prev => [...prev, { id: Date.now() + 1, role: 'ai', text: "Sorry, I encountered an error." }]);
+            setMessages(prev => [...prev, { id: Date.now() + 1, role: 'ai', text: `Error: ${error.message || "I encountered an error."}` }]);
         } finally {
             setLoading(false);
         }
