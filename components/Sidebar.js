@@ -93,12 +93,18 @@ export default function Sidebar({ onSelectChat, currentChatId }) {
         }
 
         try {
-            await fetch(`/api/chats/${chatId}`, {
+            const res = await fetch(`/api/chats/${chatId}`, {
                 method: 'DELETE'
             });
+
+            if (!res.ok) {
+                throw new Error('Failed to delete chat on server');
+            }
         } catch (err) {
-            console.error("Failed to delete chat");
+            console.error("Failed to delete chat:", err);
+            // Revert on failure
             fetchChats();
+            alert("Could not delete chat. The server might be blocking it because of existing messages. Please sync the database.");
         }
     };
 

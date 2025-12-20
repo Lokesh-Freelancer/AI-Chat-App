@@ -38,5 +38,5 @@ model Message {
   role      String   // 'user' or 'ai'
   content   String
   createdAt DateTime @default(now())
-  chat      Chat     @relation(fields: [chatId], references: [id])
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
 }
