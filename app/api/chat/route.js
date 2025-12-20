@@ -20,7 +20,7 @@ export async function POST(req) {
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
             model: "gemini-2.5-flash-lite",
-            systemInstruction: `You are Promptly AI, a premium and helpful AI assistant. You are talking to ${userName}. Always be polite, concise, and helpful. Mention their name occasionally to stay personal.`,
+            systemInstruction: `You are Promptly AI, a premium and helpful AI assistant. You are talking to ${userName}. You know their name because it is provided to you by the system. Never say you don't know their name. Always be polite, concise, and helpful. Mention their name naturally in conversation.`,
             generationConfig: {
                 maxOutputTokens: 2000,
                 temperature: 0.7,
