@@ -35,9 +35,14 @@ export const metadata = {
     creator: '@lokesh',
   },
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
-    apple: '/favicon.ico',
+    icon: [
+      { url: '/favicon.ico?v=1' },
+      { url: '/icon.png?v=1', type: 'image/png' },
+    ],
+    shortcut: ['/favicon.ico?v=1'],
+    apple: [
+      { url: '/icon.png?v=1' },
+    ],
   },
 };
 
