@@ -40,12 +40,20 @@ export const metadata = {
 };
 
 import Providers from '@/components/Providers';
+import Sidebar from '@/components/Sidebar';
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
-        <Providers>{children}</Providers>
+      <body style={{ margin: 0, padding: 0, overflow: 'hidden' }}>
+        <Providers>
+          <div className="layout-container" style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden' }}>
+            <Sidebar />
+            <main style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
+              {children}
+            </main>
+          </div>
+        </Providers>
       </body>
     </html>
   );

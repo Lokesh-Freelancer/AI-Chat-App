@@ -120,16 +120,10 @@ function ChatContent() {
     };
 
     return (
-        <div className="layout-container" style={{ display: 'flex', width: '100%', height: '100%' }}>
-            <Sidebar
-                currentChatId={null}
-                onSelectChat={(id) => id ? router.push(`/c/${id}`) : router.push('/')}
-            />
-            <main style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-                <ChatArea messages={messages} loading={loading} scrollRef={scrollRef} />
-                <InputArea onSend={handleSendMessage} loading={loading} />
-            </main>
-        </div>
+        <>
+            <ChatArea messages={messages} loading={loading} scrollRef={scrollRef} />
+            <InputArea onSend={handleSendMessage} loading={loading} />
+        </>
     );
 }
 

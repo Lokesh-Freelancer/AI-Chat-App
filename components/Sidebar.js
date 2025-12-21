@@ -1,12 +1,12 @@
 'use client';
 
 import { useSession, signOut } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import ThemeToggle from './ThemeToggle';
 
-export default function Sidebar({ onSelectChat, currentChatId }) {
+export default function Sidebar() {
     const { data: session, status } = useSession();
     const [chats, setChats] = useState([]);
     const [editingChatId, setEditingChatId] = useState(null);
@@ -14,6 +14,8 @@ export default function Sidebar({ onSelectChat, currentChatId }) {
     const [hoveredChatId, setHoveredChatId] = useState(null);
     const editInputRef = useRef(null);
     const router = useRouter();
+    const params = useParams();
+    const currentChatId = params.chatId;
 
     useEffect(() => {
         if (status === 'authenticated') {
