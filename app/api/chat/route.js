@@ -39,7 +39,7 @@ export async function POST(req) {
         const { message, history } = await req.json();
         const apiKey = process.env.GEMINI_API_KEY;
         const session = await getServerSession(authOptions);
-        const userName = session?.user?.name || "User";
+        const userName = session?.user?.name;
 
         if (!apiKey) {
             return NextResponse.json(
@@ -60,7 +60,7 @@ export async function POST(req) {
 
         let instructionSet = `
 You are Promptly AI, a premium and accurate AI assistant.
-You are talking to ${userName}. You know their name and must never deny it.
+${userName ? `You are talking to ${userName}. You know their name and must never deny it.` : `You are talking to a Guest User. Be helpful and professional, and if they ask for personalized help, politely mention they can log in to save history and get personalized responses.`}
 `;
 
         if (intent === "CODE") {
