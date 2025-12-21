@@ -3,37 +3,36 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]/route";
 
-// --- Helper Functions ---
+// ---------- Helpers ----------
 
 function detectIntent(userMessage) {
     const msg = userMessage.toLowerCase();
 
-    if (msg.includes("code") || msg.includes("bug") || msg.includes("error") ||
-        msg.includes("fix") || msg.includes("function") || msg.includes("api")) {
-        return "CODE";
-    }
-
-    if (msg.includes("resume") || msg.includes("ats") || msg.includes("job") || msg.includes("cv")) {
-        return "RESUME";
-    }
-
-    if (msg.includes("blog") || msg.includes("caption") || msg.includes("content") || msg.includes("creative")) {
-        return "CONTENT";
-    }
-
+    if (/(code|bug|error|fix|function|api)/.test(msg)) return "CODE";
+    if (/(resume|ats|job|cv)/.test(msg)) return "RESUME";
+    if (/(blog|caption|content|creative)/.test(msg)) return "CONTENT";
     return "CHAT";
 }
 
 function getTemperature(intent) {
     switch (intent) {
-        case "CODE": return 0.15;    // Strict & Logical
-        case "RESUME": return 0.2;  // Professional & Factual
-        case "CONTENT": return 0.7; // Creative & Expressive
-        default: return 0.3;        // Balanced Chat
+        case "CODE": return 0.15;
+        case "RESUME": return 0.2;
+        case "CONTENT": return 0.7;
+        default: return 0.3;
     }
 }
 
-// --- Main API Route ---
+function getMaxTokens(intent) {
+    switch (intent) {
+        case "CODE": return 3000;
+        case "RESUME": return 3500;
+        case "CONTENT": return 6000;
+        default: return 2500;
+    }
+}
+
+// ---------- API Route ----------
 
 export async function POST(req) {
     try {
@@ -42,73 +41,84 @@ export async function POST(req) {
         const session = await getServerSession(authOptions);
         const userName = session?.user?.name || "User";
 
-        if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
+        if (!apiKey) {
             return NextResponse.json(
-                { reply: "Please set your Valid GEMINI_API_KEY in the .env file." },
+                { reply: "Missing GEMINI_API_KEY in environment variables." },
                 { status: 200 }
             );
         }
 
-        // 1. Detect Intent and Get Temperature
         const intent = detectIntent(message);
-        const temperature = getTemperature(intent);
+        let temperature = getTemperature(intent);
+        const maxOutputTokens = getMaxTokens(intent);
+
+        if (message.length > 400 && intent === "CONTENT") {
+            temperature = 0.6;
+        }
 
         const genAI = new GoogleGenerativeAI(apiKey);
 
-        // 2. Dynamic Instruction based on Intent
-        let instructionSet = `You are Promptly AI, a premium and helpful AI assistant talking to ${userName}. You know their name because it is provided by the system, never deny it. `;
+        let instructionSet = `
+You are Promptly AI, a premium and accurate AI assistant.
+You are talking to ${userName}. You know their name and must never deny it.
+`;
 
         if (intent === "CODE") {
-            instructionSet += "You are an expert Software Engineer. Provide clean, secure, and well-documented code.";
-        } else if (intent === "CONTENT") {
-            instructionSet += "You are a Creative Content Writer. Use engaging language and be imaginative.";
+            instructionSet += `
+You are an expert Software Engineer.
+Provide only correct, secure, production-ready code.
+Do not invent APIs or libraries.
+If unsure, ask for clarification.
+`;
         } else if (intent === "RESUME") {
-            instructionSet += "You are a professional HR Expert. Focus on ATS optimization and professional phrasing.";
+            instructionSet += `
+You are a professional HR and ATS expert.
+Focus on keywords, clarity, and measurable achievements.
+Avoid fluff.
+`;
+        } else if (intent === "CONTENT") {
+            instructionSet += `
+You are a creative content writer.
+Be engaging, clear, and expressive.
+`;
         } else {
-            instructionSet += "Always be polite, concise, and helpful. Mention their name naturally in conversation.";
+            instructionSet += `
+Always be polite, concise, and helpful.
+Mention the user's name naturally.
+`;
         }
 
         const model = genAI.getGenerativeModel({
             model: "gemini-2.5-flash-lite",
             systemInstruction: instructionSet,
             generationConfig: {
-                temperature: temperature,
-                maxOutputTokens: 10000,
+                temperature,
+                maxOutputTokens,
             },
         });
 
-        // 3. Prepare Chat History (Ensuring valid roles for Gemini)
-        let filteredHistory = history ? history.filter(msg => msg.id !== 'welcome') : [];
-        let chatHistory = [];
+        const filteredHistory = history?.filter(msg => msg.id !== "welcome") || [];
+        const chatHistory = [];
         let lastRole = null;
 
         for (const msg of filteredHistory) {
-            const currentRole = msg.role === 'user' ? 'user' : 'model';
-            if (chatHistory.length === 0) {
-                if (currentRole === 'user') {
-                    chatHistory.push({ role: 'user', parts: [{ text: msg.text }] });
-                    lastRole = 'user';
-                }
-            } else if (currentRole !== lastRole) {
-                chatHistory.push({ role: currentRole, parts: [{ text: msg.text }] });
-                lastRole = currentRole;
+            const role = msg.role === "user" ? "user" : "model";
+            if (chatHistory.length === 0 && role !== "user") continue;
+            if (role !== lastRole) {
+                chatHistory.push({ role, parts: [{ text: msg.text }] });
+                lastRole = role;
             }
         }
 
-        const chat = model.startChat({
-            history: chatHistory,
-        });
-
+        const chat = model.startChat({ history: chatHistory });
         const result = await chat.sendMessage(message);
-        const response = await result.response;
-        const text = response.text();
 
-        return NextResponse.json({ reply: text });
+        return NextResponse.json({ reply: result.response.text() });
 
     } catch (error) {
         console.error("Gemini API Error:", error);
         return NextResponse.json(
-            { reply: `AI Error: ${error.message || "I encountered an error."}` },
+            { reply: "AI encountered an unexpected error." },
             { status: 200 }
         );
     }
