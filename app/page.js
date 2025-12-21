@@ -12,7 +12,6 @@ function ChatContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [messages, setMessages] = useState([]);
-    const [currentChatId, setCurrentChatId] = useState(null);
     const [loading, setLoading] = useState(false);
     const scrollRef = useRef(null);
 
@@ -21,11 +20,11 @@ function ChatContent() {
         return `Hello ${name}, how can I help you today?`;
     };
 
-    // Init from URL
+    // Redirect old ?chatId=... URLs to /c/[id]
     useEffect(() => {
         const urlChatId = searchParams.get('chatId');
         if (urlChatId) {
-            setCurrentChatId(urlChatId);
+            router.replace(`/c/${urlChatId}`);
         }
     }, [searchParams]);
 
@@ -36,14 +35,10 @@ function ChatContent() {
         }
     }, [messages, loading]);
 
-    // Load chat messages when ID changes
+    // Initial Welcome Message for New Chat
     useEffect(() => {
-        if (currentChatId) {
-            fetchMessages(currentChatId);
-        } else {
-            setMessages([{ id: 'welcome', role: 'ai', text: getGreeting() }]);
-        }
-    }, [currentChatId, session?.user?.name]);
+        setMessages([{ id: 'welcome', role: 'ai', text: getGreeting() }]);
+    }, [session?.user?.name]);
 
     const fetchMessages = async (chatId) => {
         try {
@@ -72,11 +67,10 @@ function ChatContent() {
         setMessages(prev => [...prev, userMsg]);
         setLoading(true);
 
-        let chatId = currentChatId;
-
         try {
-            // 1. If new chat, create it in DB
-            if (!chatId && session) {
+            // 1. Create new chat in DB
+            let chatId = null;
+            if (session) {
                 const createRes = await fetch('/api/chats', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -95,24 +89,17 @@ function ChatContent() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ role: 'user', content: text }),
                 });
-
-                // Set ID after saving to ensure fetchMessages sees the new message
-                if (!currentChatId) {
-                    setCurrentChatId(chatId);
-                    router.push(`/?chatId=${chatId}`);
-                }
             }
 
             // 3. Get AI Response
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text, history: session ? messages : [] }),
+                body: JSON.stringify({ message: text, history: [] }), // New chat
             });
 
             const data = await response.json();
             const aiText = data.reply;
-
 
             // Streaming Simulation
             const aiMsgId = Date.now() + 1;
@@ -127,13 +114,16 @@ function ChatContent() {
                 await new Promise(resolve => setTimeout(resolve, 15));
             }
 
-            // 4. Save AI Message to DB
+            // 4. Save AI Message to DB and Redirect
             if (chatId && session) {
                 await fetch(`/api/chats/${chatId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ role: 'ai', content: aiText }),
                 });
+
+                // Redirect to the new short URL
+                router.push(`/c/${chatId}`);
             }
         } catch (error) {
             console.error('Error:', error);
@@ -143,20 +133,11 @@ function ChatContent() {
         }
     };
 
-    const handleSelectChat = (id) => {
-        setCurrentChatId(id);
-        if (id) {
-            router.push(`/?chatId=${id}`);
-        } else {
-            router.push('/');
-        }
-    };
-
     return (
         <div className="layout-container" style={{ display: 'flex', width: '100%', height: '100%' }}>
             <Sidebar
-                currentChatId={currentChatId}
-                onSelectChat={handleSelectChat}
+                currentChatId={null}
+                onSelectChat={(id) => id ? router.push(`/c/${id}`) : router.push('/')}
             />
             <main style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
                 <ChatArea messages={messages} loading={loading} scrollRef={scrollRef} />
