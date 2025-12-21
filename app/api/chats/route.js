@@ -1,3 +1,7 @@
+import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { NextResponse } from "next/server";
 import { generateShortId } from "@/lib/utils";
 
 // GET: Fetch all chats for the user
