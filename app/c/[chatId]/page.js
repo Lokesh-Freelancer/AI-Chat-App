@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import ChatArea from '@/components/ChatArea';
 import InputArea from '@/components/InputArea';
@@ -11,10 +11,12 @@ function ChatContent() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const params = useParams();
+    const searchParams = useSearchParams();
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(false);
     const scrollRef = useRef(null);
     const chatId = params.chatId;
+    const trigger = searchParams.get('trigger');
 
     const getGreeting = () => {
         const name = session?.user?.name || 'there';
@@ -31,11 +33,11 @@ function ChatContent() {
     // Load chat messages when ID changes
     useEffect(() => {
         if (chatId) {
-            fetchMessages(chatId);
+            fetchMessages(chatId, trigger === 'true');
         }
     }, [chatId, session?.user?.name]);
 
-    const fetchMessages = async (id) => {
+    const fetchMessages = async (id, shouldTriggerAI = false) => {
         try {
             const res = await fetch(`/api/chats/${id}`);
             if (res.ok) {
@@ -46,17 +48,25 @@ function ChatContent() {
                     { id: 'welcome', role: 'ai', text: getGreeting() },
                     ...uiMessages
                 ]);
+
+                // If trigger is true and we only have one user message
+                if (shouldTriggerAI && uiMessages.length === 1 && uiMessages[0].role === 'user') {
+                    handleSendMessage(uiMessages[0].text, true);
+                    router.replace(`/c/${id}`);
+                }
             }
         } catch (err) {
             console.error("Failed to load messages");
         }
     };
 
-    const handleSendMessage = async (text) => {
+    const handleSendMessage = async (text, isAutoTrigger = false) => {
         if (!text.trim()) return;
 
-        const userMsg = { id: Date.now(), role: 'user', text };
-        setMessages(prev => [...prev, userMsg]);
+        if (!isAutoTrigger) {
+            const userMsg = { id: Date.now(), role: 'user', text };
+            setMessages(prev => [...prev, userMsg]);
+        }
         setLoading(true);
 
         try {

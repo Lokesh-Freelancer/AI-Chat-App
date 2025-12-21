@@ -39,8 +39,30 @@ export default function Sidebar({ onSelectChat, currentChatId }) {
         }
     };
 
-    const handleNewChat = () => {
-        onSelectChat(null);
+    const handleNewChat = async () => {
+        if (!session) {
+            router.push('/');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/chats', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: '' }), // Empty message for initial creation
+            });
+
+            if (res.ok) {
+                const newChat = await res.json();
+                fetchChats(); // Refresh list
+                router.push(`/c/${newChat.id}`);
+            } else {
+                router.push('/');
+            }
+        } catch (err) {
+            console.error("Failed to create instant chat");
+            router.push('/');
+        }
     };
 
     const startEditing = (e, chat) => {

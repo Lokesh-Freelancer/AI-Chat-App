@@ -63,71 +63,57 @@ function ChatContent() {
         if (!text.trim()) return;
 
         // Optimistic User Message
-        const userMsg = { id: Date.now(), role: 'user', text };
-        setMessages(prev => [...prev, userMsg]);
+        setMessages(prev => [...prev, { id: 'initial', role: 'user', text }]);
         setLoading(true);
 
         try {
             // 1. Create new chat in DB
-            let chatId = null;
             if (session) {
                 const createRes = await fetch('/api/chats', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: text }),
                 });
+
                 if (createRes.ok) {
                     const newChat = await createRes.json();
-                    chatId = newChat.id;
+
+                    // 2. Save the first user message
+                    await fetch(`/api/chats/${newChat.id}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ role: 'user', content: text }),
+                    });
+
+                    // 3. IMMEDIATELY redirect to the new chat page
+                    // We pass 'trigger=true' so the new page knows to generate the first AI response
+                    router.push(`/c/${newChat.id}?trigger=true`);
+                }
+            } else {
+                // Guest mode - respond locally
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text, history: [] }),
+                });
+                const data = await response.json();
+                const aiText = data.reply;
+
+                // Streaming Simulation
+                const aiMsgId = Date.now() + 1;
+                setMessages(prev => [...prev, { id: aiMsgId, role: 'ai', text: '' }]);
+
+                let currentText = '';
+                const chunks = aiText.match(/(.|[\r\n]){1,4}/g) || [];
+
+                for (const chunk of chunks) {
+                    currentText += chunk;
+                    setMessages(prev => prev.map(msg => msg.id === aiMsgId ? { ...msg, text: currentText } : msg));
+                    await new Promise(resolve => setTimeout(resolve, 15));
                 }
             }
-
-            // 2. Save User Message to DB
-            if (chatId && session) {
-                await fetch(`/api/chats/${chatId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ role: 'user', content: text }),
-                });
-            }
-
-            // 3. Get AI Response
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text, history: [] }), // New chat
-            });
-
-            const data = await response.json();
-            const aiText = data.reply;
-
-            // Streaming Simulation
-            const aiMsgId = Date.now() + 1;
-            setMessages(prev => [...prev, { id: aiMsgId, role: 'ai', text: '' }]);
-
-            let currentText = '';
-            const chunks = aiText.match(/(.|[\r\n]){1,4}/g) || [];
-
-            for (const chunk of chunks) {
-                currentText += chunk;
-                setMessages(prev => prev.map(msg => msg.id === aiMsgId ? { ...msg, text: currentText } : msg));
-                await new Promise(resolve => setTimeout(resolve, 15));
-            }
-
-            // 4. Save AI Message to DB and Redirect
-            if (chatId && session) {
-                await fetch(`/api/chats/${chatId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ role: 'ai', content: aiText }),
-                });
-
-                // Redirect to the new short URL
-                router.push(`/c/${chatId}`);
-            }
         } catch (error) {
-            console.error('Error:', error);
-            setMessages(prev => [...prev, { id: Date.now() + 1, role: 'ai', text: `Error: ${error.message || "I encountered an error."}` }]);
+            console.error('Initial Send Error:', error);
         } finally {
             setLoading(false);
         }
