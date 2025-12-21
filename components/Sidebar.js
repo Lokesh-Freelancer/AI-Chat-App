@@ -204,7 +204,7 @@ export default function Sidebar({ onSelectChat, currentChatId }) {
                                 {list.map(chat => (
                                     <div
                                         key={chat.id}
-                                        onClick={() => onSelectChat(chat.id)}
+                                        onClick={() => router.push(`/c/${chat.id}`)}
                                         onMouseEnter={() => setHoveredChatId(chat.id)}
                                         onMouseLeave={() => setHoveredChatId(null)}
                                         style={{
