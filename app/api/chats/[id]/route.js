@@ -12,10 +12,10 @@ export async function GET(req, { params }) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Verify chat belongs to user
+    // Verify chat belongs to user and get title
     const chat = await prisma.chat.findUnique({
         where: { id: chatId },
-        select: { userId: true }
+        select: { userId: true, title: true }
     });
 
     if (!chat || chat.userId !== session.user.id) {
@@ -27,7 +27,7 @@ export async function GET(req, { params }) {
         orderBy: { createdAt: 'asc' }
     });
 
-    return NextResponse.json(messages);
+    return NextResponse.json({ title: chat.title, messages });
 }
 
 // POST: Add message to chat (User or AI)
@@ -73,7 +73,7 @@ export async function POST(req, { params }) {
             data: updateData
         });
 
-        return NextResponse.json(message);
+        return NextResponse.json({ message, updatedTitle: updateData.title });
     } catch (error) {
         return NextResponse.json({ error: "Failed to save message" }, { status: 500 });
     }

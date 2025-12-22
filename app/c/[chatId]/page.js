@@ -42,12 +42,17 @@ function ChatContent() {
             const res = await fetch(`/api/chats/${id}`);
             if (res.ok) {
                 const data = await res.json();
-                const uiMessages = data.map(m => ({ id: m.id, role: m.role, text: m.content }));
+                const uiMessages = data.messages.map(m => ({ id: m.id, role: m.role, text: m.content }));
 
                 setMessages([
                     { id: 'welcome', role: 'ai', text: getGreeting() },
                     ...uiMessages
                 ]);
+
+                // Update Brower Tab Title
+                if (data.title) {
+                    document.title = `${data.title} | Promptly AI`;
+                }
 
                 // If trigger is true and we only have one user message
                 if (shouldTriggerAI && uiMessages.length === 1 && uiMessages[0].role === 'user') {
@@ -72,11 +77,15 @@ function ChatContent() {
         try {
             // Save User Message to DB
             if (chatId && session) {
-                await fetch(`/api/chats/${chatId}`, {
+                const saveRes = await fetch(`/api/chats/${chatId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ role: 'user', content: text }),
                 });
+                const saveData = await saveRes.json();
+                if (saveData.updatedTitle) {
+                    document.title = `${saveData.updatedTitle} | Promptly AI`;
+                }
                 window.dispatchEvent(new CustomEvent('chatUpdated'));
             }
 

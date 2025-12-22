@@ -21,6 +21,11 @@ function ChatContent() {
     };
 
     // Redirect old ?chatId=... URLs to /c/[id]
+    // Reset Title on home
+    useEffect(() => {
+        document.title = 'Promptly AI - Smart Assistant';
+    }, []);
+
     useEffect(() => {
         const urlChatId = searchParams.get('chatId');
         if (urlChatId) {
