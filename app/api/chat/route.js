@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]/route";
+import prisma from "@/lib/prisma";
 
 // ---------- Helpers ----------
 
@@ -58,9 +59,43 @@ export async function POST(req) {
 
         const genAI = new GoogleGenerativeAI(apiKey);
 
+        // --- FETCH GLOBAL CONTEXT (DEEP MEMORY) ---
+        let globalContext = "";
+        if (session?.user?.id) {
+            try {
+                // Fetch the last 20 messages across all chats for this user (most recent first)
+                const recentMessages = await prisma.message.findMany({
+                    where: {
+                        chat: { userId: session.user.id },
+                        // Optional: skip current message? No, we need previous context
+                    },
+                    take: 20,
+                    orderBy: { createdAt: 'desc' },
+                    select: { role: true, content: true, chat: { select: { title: true } } }
+                });
+
+                if (recentMessages.length > 0) {
+                    globalContext = "\n\nCRITICAL CONTEXT (Previous interactions across all chats):\n";
+                    // Reverse to show chronological order
+                    recentMessages.reverse().forEach(m => {
+                        globalContext += `[Chat: ${m.chat.title}] ${m.role === 'user' ? 'User' : 'AI'}: ${m.content}\n`;
+                    });
+                }
+            } catch (err) {
+                console.error("Memory fetch error:", err);
+            }
+        }
+
         let instructionSet = `
 You are Promptly AI, a premium and accurate AI assistant.
 ${userName ? `You are talking to ${userName}. You know their name and must never deny it.` : `You are talking to a Guest User. Be helpful and professional, and if they ask for personalized help, politely mention they can log in to save history and get personalized responses.`}
+
+${globalContext}
+
+DIRECTIONS FOR GLOBAL CONTEXT:
+1. User might ask about something they discussed in a different chat. Use the context above to answer correctly.
+2. If the user asks "What were we doing?" or "What did I ask before?", refer to the context provided.
+3. Be professional and treat this as your long-term memory.
 `;
 
         if (intent === "CODE") {
