@@ -99,18 +99,61 @@ export default function MessageBubble({ message }) {
             }}>
                 {message.image && (
                     <div style={{ marginBottom: '12px' }}>
-                        <img
-                            src={message.image}
-                            alt="Message Attachment"
-                            style={{
-                                maxWidth: '100%',
-                                maxHeight: '400px',
-                                borderRadius: '12px',
-                                border: '1px solid var(--border-color)',
-                                cursor: 'zoom-in'
-                            }}
-                            onClick={() => window.open(message.image)}
-                        />
+                        {message.image.startsWith('data:application/pdf') ? (
+                            <div
+                                onClick={() => {
+                                    const link = document.createElement('a');
+                                    link.href = message.image;
+                                    link.download = 'document.pdf';
+                                    link.click();
+                                }}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '12px',
+                                    padding: '12px 16px',
+                                    backgroundColor: 'var(--surface-color)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '12px',
+                                    cursor: 'pointer',
+                                    width: 'fit-content',
+                                    transition: 'background-color 0.2s',
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-color-soft)'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--surface-color)'}
+                            >
+                                <div style={{
+                                    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+                                    padding: '8px',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                    </svg>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <span style={{ fontSize: '0.9rem', fontWeight: '500', color: 'var(--text-main)' }}>PDF Document</span>
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Click to view or download</span>
+                                </div>
+                            </div>
+                        ) : (
+                            <img
+                                src={message.image}
+                                alt="Message Attachment"
+                                style={{
+                                    maxWidth: '100%',
+                                    maxHeight: '400px',
+                                    borderRadius: '12px',
+                                    border: '1px solid var(--border-color)',
+                                    cursor: 'zoom-in'
+                                }}
+                                onClick={() => window.open(message.image)}
+                            />
+                        )}
                     </div>
                 )}
                 {isUser ? (

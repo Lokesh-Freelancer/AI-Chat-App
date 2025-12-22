@@ -92,10 +92,10 @@ ${userName ? `You are talking to ${userName}. You know their name and must never
 
 ${globalContext}
 
-DIRECTIONS FOR GLOBAL CONTEXT:
-1. User might ask about something they discussed in a different chat. Use the context above to answer correctly.
-2. If the user asks "What were we doing?" or "What did I ask before?", refer to the context provided.
-3. Be professional and treat this as your long-term memory.
+DIRECTIONS:
+1. GLOBAL CONTEXT: User might ask about something they discussed in a different chat. Use the context above (long-term memory) to answer correctly.
+2. DOCUMENT ANALYSIS: If the user uploads a PDF or Resume, analyze it professionally. Provide feedback on structure, keywords, clarity, and impact.
+3. PROFESSIONALISM: Be accurate, concise, and helpful.
 `;
 
         if (intent === "CODE") {
@@ -152,7 +152,7 @@ Mention the user's name naturally.
 
         if (image) {
             try {
-                // Extract base64 data and mime type
+                // Extract base64 data and mime type from data:mime/type;base64,data
                 const [mimeInfo, base64Data] = image.split(",");
                 const mimeType = mimeInfo.split(":")[1].split(";")[0];
 
