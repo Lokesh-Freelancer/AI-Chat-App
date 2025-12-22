@@ -94,8 +94,7 @@ ${globalContext}
 
 DIRECTIONS:
 1. GLOBAL CONTEXT: User might ask about something they discussed in a different chat. Use the context above (long-term memory) to answer correctly.
-2. DOCUMENT ANALYSIS: If the user uploads a PDF or Resume, analyze it professionally. Provide feedback on structure, keywords, clarity, and impact.
-3. PROFESSIONALISM: Be accurate, concise, and helpful.
+2. PROFESSIONALISM: Be accurate, concise, and helpful.
 `;
 
         if (intent === "CODE") {
