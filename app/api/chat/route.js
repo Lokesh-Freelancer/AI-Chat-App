@@ -124,7 +124,7 @@ Mention the user's name naturally.
         }
 
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash-lite",
+            model: "gemini-2.5-flash",
             systemInstruction: instructionSet,
             generationConfig: {
                 temperature,
