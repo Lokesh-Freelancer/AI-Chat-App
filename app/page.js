@@ -66,8 +66,8 @@ function ChatContent() {
 
     const [isSending, setIsSending] = useState(false);
 
-    const handleSendMessage = async (text, image = null) => {
-        if ((!text.trim() && !image) || isSending) return;
+    const handleSendMessage = async (text = '', image = null) => {
+        if (!text?.trim() && !image || isSending) return;
 
         setIsSending(true);
         // Optimistic User Message

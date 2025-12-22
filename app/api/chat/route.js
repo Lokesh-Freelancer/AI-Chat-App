@@ -136,10 +136,14 @@ Mention the user's name naturally.
         let lastRole = null;
 
         for (const msg of filteredHistory) {
-            const role = msg.role === "user" ? "user" : "model";
-            if (chatHistory.length === 0 && role !== "user") continue;
+            const role = msg.role === 'user' ? 'user' : 'model';
+            const textContent = msg.text || msg.content || "";
+
+            // Skip empty messages in history as they confuse the AI
+            if (!textContent.trim() && !msg.image) continue;
+
             if (role !== lastRole) {
-                chatHistory.push({ role, parts: [{ text: msg.text }] });
+                chatHistory.push({ role, parts: [{ text: textContent || (msg.image ? "[Sent an image]" : "") }] });
                 lastRole = role;
             }
         }
@@ -147,23 +151,33 @@ Mention the user's name naturally.
         const chat = model.startChat({ history: chatHistory });
 
         // --- MULTIMODAL HANDLING ---
-        let promptParts = [message];
+        let promptParts = [message || "Analyze this"];
 
         if (image) {
             try {
-                // Extract base64 data and mime type from data:mime/type;base64,data
-                const [mimeInfo, base64Data] = image.split(",");
-                const mimeType = mimeInfo.split(":")[1].split(";")[0];
+                let base64Data = image;
+                let mimeType = "image/jpeg"; // Default fallback
 
-                promptParts = [
-                    {
-                        inlineData: {
-                            data: base64Data,
-                            mimeType: mimeType
-                        }
-                    },
-                    message
-                ];
+                if (image.includes(",")) {
+                    const parts = image.split(",");
+                    if (parts.length > 1) {
+                        base64Data = parts[1];
+                        const mimeMatch = parts[0].match(/data:(.*?);/);
+                        if (mimeMatch) mimeType = mimeMatch[1];
+                    }
+                }
+
+                if (base64Data && base64Data.length > 10) { // Check if base64Data is substantial
+                    promptParts = [
+                        {
+                            inlineData: {
+                                data: base64Data,
+                                mimeType: mimeType
+                            }
+                        },
+                        message || "Analyze this image" // Default text prompt if message is empty
+                    ];
+                }
             } catch (err) {
                 console.error("Image processing error:", err);
             }
@@ -174,9 +188,9 @@ Mention the user's name naturally.
         return NextResponse.json({ reply: result.response.text() });
 
     } catch (error) {
-        console.error("Gemini API Error:", error);
+        console.error("Gemini API Error Detail:", error);
         return NextResponse.json(
-            { reply: "AI encountered an unexpected error." },
+            { reply: `AI encountered an unexpected error: ${error.message || "Unknown error"}` },
             { status: 200 }
         );
     }

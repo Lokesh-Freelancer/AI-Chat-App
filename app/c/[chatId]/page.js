@@ -42,7 +42,12 @@ function ChatContent() {
             const res = await fetch(`/api/chats/${id}`);
             if (res.ok) {
                 const data = await res.json();
-                const uiMessages = data.messages.map(m => ({ id: m.id, role: m.role, text: m.content }));
+                const uiMessages = data.messages.map(m => ({
+                    id: m.id,
+                    role: m.role,
+                    text: m.content,
+                    image: m.image
+                }));
 
                 setMessages([
                     { id: 'welcome', role: 'ai', text: getGreeting() },
@@ -68,8 +73,8 @@ function ChatContent() {
         }
     };
 
-    const handleSendMessage = async (text, image = null, isAutoTrigger = false) => {
-        if (!text.trim() && !image) return;
+    const handleSendMessage = async (text = '', image = null, isAutoTrigger = false) => {
+        if (!text?.trim() && !image) return;
 
         if (!isAutoTrigger) {
             const userMsg = { id: Date.now(), role: 'user', text, image };
