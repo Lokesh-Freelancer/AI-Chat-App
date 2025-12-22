@@ -12,6 +12,7 @@ export default function Sidebar() {
     const [editingChatId, setEditingChatId] = useState(null);
     const [editValue, setEditValue] = useState('');
     const [hoveredChatId, setHoveredChatId] = useState(null);
+    const [isCreating, setIsCreating] = useState(false);
     const editInputRef = useRef(null);
     const router = useRouter();
     const params = useParams();
@@ -51,6 +52,15 @@ export default function Sidebar() {
             return;
         }
 
+        // Check if an empty "New Chat" already exists
+        const existingEmptyChat = chats.find(c => c.title === "New Chat");
+        if (existingEmptyChat) {
+            router.push(`/c/${existingEmptyChat.id}`);
+            return;
+        }
+
+        if (isCreating) return;
+        setIsCreating(true);
         try {
             const res = await fetch('/api/chats', {
                 method: 'POST',
@@ -60,7 +70,7 @@ export default function Sidebar() {
 
             if (res.ok) {
                 const newChat = await res.json();
-                fetchChats(); // Refresh list
+                window.dispatchEvent(new CustomEvent('chatUpdated'));
                 router.push(`/c/${newChat.id}`);
             } else {
                 router.push('/');
@@ -68,6 +78,8 @@ export default function Sidebar() {
         } catch (err) {
             console.error("Failed to create instant chat");
             router.push('/');
+        } finally {
+            setIsCreating(false);
         }
     };
 
@@ -116,7 +128,6 @@ export default function Sidebar() {
         // Optimistic delete
         setChats(prev => prev.filter(c => c.id !== chatId));
         if (currentChatId === chatId) {
-            onSelectChat(null);
             router.push('/');
         }
 

@@ -64,9 +64,12 @@ function ChatContent() {
         }
     };
 
-    const handleSendMessage = async (text) => {
-        if (!text.trim()) return;
+    const [isSending, setIsSending] = useState(false);
 
+    const handleSendMessage = async (text) => {
+        if (!text.trim() || isSending) return;
+
+        setIsSending(true);
         // Optimistic User Message
         setMessages(prev => [...prev, { id: 'initial', role: 'user', text }]);
         setLoading(true);
@@ -125,6 +128,7 @@ function ChatContent() {
             console.error('Initial Send Error:', error);
         } finally {
             setLoading(false);
+            setIsSending(false);
         }
     };
 

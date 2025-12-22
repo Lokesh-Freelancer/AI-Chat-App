@@ -59,9 +59,12 @@ function ChatContent() {
                     handleSendMessage(uiMessages[0].text, true);
                     router.replace(`/c/${id}`);
                 }
+            } else {
+                router.replace('/');
             }
         } catch (err) {
             console.error("Failed to load messages");
+            router.replace('/');
         }
     };
 
