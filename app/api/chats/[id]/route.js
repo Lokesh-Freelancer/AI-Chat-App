@@ -55,10 +55,22 @@ export async function POST(req, { params }) {
             }
         });
 
-        // Update chat timestamp
+        // Update chat timestamp & optionally title
+        const chat = await prisma.chat.findUnique({
+            where: { id: chatId },
+            select: { title: true }
+        });
+
+        const updateData = { updatedAt: new Date() };
+
+        // If it's a 'New Chat', update title with first user message
+        if (chat && chat.title === "New Chat" && role === "user") {
+            updateData.title = content.slice(0, 30) + (content.length > 30 ? '...' : '');
+        }
+
         await prisma.chat.update({
             where: { id: chatId },
-            data: { updatedAt: new Date() }
+            data: updateData
         });
 
         return NextResponse.json(message);

@@ -87,7 +87,11 @@ function ChatContent() {
 
                     // 3. IMMEDIATELY redirect to the new chat page
                     // We pass 'trigger=true' so the new page knows to generate the first AI response
-                    router.push(`/c/${newChat.id}?trigger=true`);
+                    if (newChat.id) {
+                        // Redirect immediately after chat is created on server
+                        window.dispatchEvent(new CustomEvent('chatUpdated'));
+                        router.push(`/c/${newChat.id}?trigger=true`);
+                    }
                 }
             } else {
                 // Guest mode - respond locally

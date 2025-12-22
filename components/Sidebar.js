@@ -21,6 +21,10 @@ export default function Sidebar() {
         if (status === 'authenticated') {
             fetchChats();
         }
+
+        const handleUpdate = () => fetchChats();
+        window.addEventListener('chatUpdated', handleUpdate);
+        return () => window.removeEventListener('chatUpdated', handleUpdate);
     }, [status]);
 
     useEffect(() => {

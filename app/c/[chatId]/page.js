@@ -77,6 +77,7 @@ function ChatContent() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ role: 'user', content: text }),
                 });
+                window.dispatchEvent(new CustomEvent('chatUpdated'));
             }
 
             // Get AI Response
