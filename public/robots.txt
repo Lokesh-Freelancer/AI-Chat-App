@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /c/
+Sitemap: https://promptly-ai.vercel.app/sitemap.xml
