@@ -37,7 +37,7 @@ function getMaxTokens(intent) {
 
 export async function POST(req) {
     try {
-        const { message, history } = await req.json();
+        const { message, history, image } = await req.json();
         const apiKey = process.env.GEMINI_API_KEY;
         const session = await getServerSession(authOptions);
         const userName = session?.user?.name;
@@ -146,7 +146,31 @@ Mention the user's name naturally.
         }
 
         const chat = model.startChat({ history: chatHistory });
-        const result = await chat.sendMessage(message);
+
+        // --- MULTIMODAL HANDLING ---
+        let promptParts = [message];
+
+        if (image) {
+            try {
+                // Extract base64 data and mime type
+                const [mimeInfo, base64Data] = image.split(",");
+                const mimeType = mimeInfo.split(":")[1].split(";")[0];
+
+                promptParts = [
+                    {
+                        inlineData: {
+                            data: base64Data,
+                            mimeType: mimeType
+                        }
+                    },
+                    message
+                ];
+            } catch (err) {
+                console.error("Image processing error:", err);
+            }
+        }
+
+        const result = await chat.sendMessage(promptParts);
 
         return NextResponse.json({ reply: result.response.text() });
 

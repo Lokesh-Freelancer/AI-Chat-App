@@ -68,11 +68,11 @@ function ChatContent() {
         }
     };
 
-    const handleSendMessage = async (text, isAutoTrigger = false) => {
-        if (!text.trim()) return;
+    const handleSendMessage = async (text, image = null, isAutoTrigger = false) => {
+        if (!text.trim() && !image) return;
 
         if (!isAutoTrigger) {
-            const userMsg = { id: Date.now(), role: 'user', text };
+            const userMsg = { id: Date.now(), role: 'user', text, image };
             setMessages(prev => [...prev, userMsg]);
         }
         setLoading(true);
@@ -83,7 +83,7 @@ function ChatContent() {
                 const saveRes = await fetch(`/api/chats/${chatId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ role: 'user', content: text }),
+                    body: JSON.stringify({ role: 'user', content: text, image }),
                 });
                 const saveData = await saveRes.json();
                 if (saveData.updatedTitle) {
@@ -96,7 +96,7 @@ function ChatContent() {
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text, history: session ? messages : [] }),
+                body: JSON.stringify({ message: text, history: session ? messages : [], image }),
             });
 
             const data = await response.json();

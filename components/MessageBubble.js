@@ -97,6 +97,22 @@ export default function MessageBubble({ message }) {
                 borderTopLeftRadius: isUser ? '18px' : '4px',
                 overflowWrap: 'break-word',
             }}>
+                {message.image && (
+                    <div style={{ marginBottom: '12px' }}>
+                        <img
+                            src={message.image}
+                            alt="Message Attachment"
+                            style={{
+                                maxWidth: '100%',
+                                maxHeight: '400px',
+                                borderRadius: '12px',
+                                border: '1px solid var(--border-color)',
+                                cursor: 'zoom-in'
+                            }}
+                            onClick={() => window.open(message.image)}
+                        />
+                    </div>
+                )}
                 {isUser ? (
                     <div>{message.text}</div>
                 ) : (

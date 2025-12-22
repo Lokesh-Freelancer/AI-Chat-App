@@ -37,6 +37,7 @@ model Message {
   chatId    String
   role      String   // 'user' or 'ai'
   content   String
+  image     String?  @db.Text
   createdAt DateTime @default(now())
   chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
 }

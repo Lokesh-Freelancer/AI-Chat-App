@@ -66,12 +66,12 @@ function ChatContent() {
 
     const [isSending, setIsSending] = useState(false);
 
-    const handleSendMessage = async (text) => {
-        if (!text.trim() || isSending) return;
+    const handleSendMessage = async (text, image = null) => {
+        if ((!text.trim() && !image) || isSending) return;
 
         setIsSending(true);
         // Optimistic User Message
-        setMessages(prev => [...prev, { id: 'initial', role: 'user', text }]);
+        setMessages(prev => [...prev, { id: 'initial', role: 'user', text, image }]);
         setLoading(true);
 
         try {
@@ -86,17 +86,15 @@ function ChatContent() {
                 if (createRes.ok) {
                     const newChat = await createRes.json();
 
-                    // 2. Save the first user message
+                    // 2. Save the first user message (with image)
                     await fetch(`/api/chats/${newChat.id}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ role: 'user', content: text }),
+                        body: JSON.stringify({ role: 'user', content: text, image }),
                     });
 
                     // 3. IMMEDIATELY redirect to the new chat page
-                    // We pass 'trigger=true' so the new page knows to generate the first AI response
                     if (newChat.id) {
-                        // Redirect immediately after chat is created on server
                         window.dispatchEvent(new CustomEvent('chatUpdated'));
                         router.push(`/c/${newChat.id}?trigger=true`);
                     }
@@ -106,7 +104,7 @@ function ChatContent() {
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: text, history: [] }),
+                    body: JSON.stringify({ message: text, history: [], image }),
                 });
                 const data = await response.json();
                 const aiText = data.reply;

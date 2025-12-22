@@ -24,10 +24,13 @@ export async function GET(req, { params }) {
 
     const messages = await prisma.message.findMany({
         where: { chatId },
-        orderBy: { createdAt: 'asc' }
+        orderBy: { createdAt: 'asc' },
+        select: { id: true, role: true, content: true, image: true }
     });
 
-    return NextResponse.json({ title: chat.title, messages });
+    const uiMessages = messages.map(m => ({ id: m.id, role: m.role, text: m.content, image: m.image }));
+
+    return NextResponse.json({ title: chat.title, messages: uiMessages });
 }
 
 // POST: Add message to chat (User or AI)
@@ -45,13 +48,14 @@ export async function POST(req, { params }) {
     }
 
     try {
-        const { role, content } = await req.json();
+        const { role, content, image } = await req.json();
 
         const message = await prisma.message.create({
             data: {
                 chatId,
                 role,
-                content
+                content,
+                image: image || null
             }
         });
 
