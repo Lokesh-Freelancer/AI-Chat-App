@@ -203,7 +203,9 @@ export default function Sidebar() {
             borderRight: '1px solid var(--border-color)',
             transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             flexShrink: 0,
-            overflowX: 'hidden'
+            overflowX: isCollapsed ? 'visible' : 'hidden',
+            position: 'relative',
+            zIndex: 100
         }}>
             {/* Header with Logo and Toggle */}
             <div
@@ -240,7 +242,7 @@ export default function Sidebar() {
                         <button
                             onClick={toggleSidebar}
                             className="sidebar-toggle"
-                            title="Expand Sidebar"
+                            data-tooltip="Expand Sidebar"
                             style={{
                                 background: 'none',
                                 border: 'none',
@@ -288,7 +290,7 @@ export default function Sidebar() {
                         <button
                             onClick={toggleSidebar}
                             className="sidebar-toggle"
-                            title="Collapse Sidebar"
+                            data-tooltip="Collapse Sidebar"
                             style={{
                                 background: 'none',
                                 border: 'none',
@@ -321,7 +323,7 @@ export default function Sidebar() {
             }}>
                 <div
                     onClick={handleNewChat}
-                    title={isCollapsed ? "New chat" : ""}
+                    data-tooltip={isCollapsed ? "New chat" : ""}
                     style={{
                         padding: isCollapsed ? '10px' : '12px 14px',
                         borderRadius: '12px',
@@ -347,7 +349,7 @@ export default function Sidebar() {
                 </div>
                 {!isCollapsed && (
                     <div style={{ marginTop: '12px', width: '100%' }}>
-                        <ThemeToggle />
+                        {/* ThemeToggle removed from here */}
                     </div>
                 )}
             </div>
@@ -380,7 +382,7 @@ export default function Sidebar() {
                                         onClick={() => router.push(`/c/${chat.id}`)}
                                         onMouseEnter={() => setHoveredChatId(chat.id)}
                                         onMouseLeave={() => setHoveredChatId(null)}
-                                        title={isCollapsed ? chat.title : ""}
+                                        data-tooltip={isCollapsed ? chat.title : ""}
                                         className="chat-item-hover"
                                         style={{
                                             padding: isCollapsed ? '10px' : '10px 14px',
@@ -464,34 +466,48 @@ export default function Sidebar() {
             </div>
 
             {session && (
-                <div
-                    title={isCollapsed ? session.user.name : ""}
-                    style={{
-                        padding: '15px 10px',
-                        borderTop: isCollapsed ? 'none' : '1px solid var(--border-color)',
-                        marginTop: 'auto',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: isCollapsed ? 'center' : 'flex-start',
-                        gap: '12px'
-                    }}
-                >
-                    {session.user.image ? (
-                        <img src={session.user.image} alt="Avatar" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-                    ) : (
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', flexShrink: 0 }}>
-                            {session.user.name?.[0]?.toUpperCase() || 'U'}
-                        </div>
-                    )}
-                    {!isCollapsed && (
-                        <div style={{ flex: 1, overflow: 'hidden' }}>
-                            <div style={{ color: 'var(--text-main)', fontSize: '0.9rem', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.user.name}</div>
-                            <div style={{ display: 'flex', gap: '10px', marginTop: '2px' }}>
-                                <Link href={`/profile?chatId=${currentChatId || ''}`} style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', textDecoration: 'none' }} className="hover-link">Profile</Link>
-                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', cursor: 'pointer' }} className="hover-link" onClick={() => signOut()}>Logout</span>
+                <div style={{
+                    marginTop: 'auto',
+                    borderTop: isCollapsed ? 'none' : '1px solid var(--border-color)',
+                    display: 'flex',
+                    flexDirection: isCollapsed ? 'column' : 'row',
+                    alignItems: 'center',
+                    padding: '15px 10px',
+                    gap: isCollapsed ? '15px' : '12px',
+                }}>
+                    <div
+                        data-tooltip={isCollapsed ? session.user.name : ""}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: isCollapsed ? 'center' : 'flex-start',
+                            gap: '12px',
+                            flex: 1,
+                            minWidth: 0
+                        }}
+                    >
+                        {session.user.image ? (
+                            <img src={session.user.image} alt="Avatar" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                        ) : (
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', flexShrink: 0 }}>
+                                {session.user.name?.[0]?.toUpperCase() || 'U'}
                             </div>
-                        </div>
-                    )}
+                        )}
+                        {!isCollapsed && (
+                            <div style={{ flex: 1, overflow: 'hidden' }}>
+                                <div style={{ color: 'var(--text-main)', fontSize: '0.9rem', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.user.name}</div>
+                                <div style={{ display: 'flex', gap: '10px', marginTop: '2px' }}>
+                                    <Link href={`/profile?chatId=${currentChatId || ''}`} style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', textDecoration: 'none' }} className="hover-link">Profile</Link>
+                                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', cursor: 'pointer' }} className="hover-link" onClick={() => signOut()}>Logout</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Theme Toggle at Bottom */}
+                    <div style={{ height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <ThemeToggle />
+                    </div>
                 </div>
             )}
         </aside>

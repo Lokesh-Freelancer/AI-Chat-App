@@ -16,6 +16,7 @@ export default function ThemeToggle() {
     return (
         <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            data-tooltip={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             style={{
                 background: 'none',
                 border: '1px solid var(--border-color)',
