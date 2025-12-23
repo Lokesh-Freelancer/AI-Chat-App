@@ -4,10 +4,10 @@ export default function ChatArea({ messages, loading, scrollRef }) {
     return (
         <div
             ref={scrollRef}
+            className="chat-area-container"
             style={{
                 flex: 1,
                 overflowY: 'auto',
-                padding: '24px 0',
                 display: 'flex',
                 flexDirection: 'column',
             }}

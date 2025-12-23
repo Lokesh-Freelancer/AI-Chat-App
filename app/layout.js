@@ -51,6 +51,7 @@ export const metadata = {
 
 import Providers from '@/components/Providers';
 import Sidebar from '@/components/Sidebar';
+import MobileHeader from '@/components/MobileHeader';
 
 export default function RootLayout({ children }) {
   return (
@@ -60,6 +61,7 @@ export default function RootLayout({ children }) {
           <div className="layout-container" style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden' }}>
             <Sidebar />
             <main style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
+              <MobileHeader />
               {children}
             </main>
           </div>

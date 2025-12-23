@@ -46,14 +46,14 @@ export default function InputArea({ onSend, loading }) {
     };
 
     return (
-        <div style={{
+        <div className="input-area-container" style={{
             padding: '20px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             background: 'linear-gradient(to top, var(--bg-color) 80%, transparent)',
         }}>
-            <div style={{
+            <div className="input-container-inner" style={{
                 maxWidth: '800px',
                 width: '100%',
                 position: 'relative',
@@ -210,7 +210,7 @@ export default function InputArea({ onSend, loading }) {
                         }}
                     >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z" fill="#131314" />
+                            <path d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z" fill="#ffffff" />
                         </svg>
                     </button>
                 </div>
