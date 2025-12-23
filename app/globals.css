@@ -414,11 +414,23 @@ body {
   }
 
   .input-area-container {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
     padding: 10px !important;
+    background: var(--bg-color) !important;
+    border-top: 1px solid var(--border-color) !important;
+    z-index: 50 !important;
   }
 
   .input-container-inner {
     max-width: 100% !important;
+  }
+
+  /* Add padding to chat area to prevent content from going under input */
+  .chat-area-container {
+    padding-bottom: 80px !important;
   }
 
   /* Responsive Headers */
