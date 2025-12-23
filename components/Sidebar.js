@@ -13,10 +13,23 @@ export default function Sidebar() {
     const [editValue, setEditValue] = useState('');
     const [hoveredChatId, setHoveredChatId] = useState(null);
     const [isCreating, setIsCreating] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(false);
     const editInputRef = useRef(null);
     const router = useRouter();
     const params = useParams();
     const currentChatId = params.chatId;
+
+    // Load/Save collapsed state
+    useEffect(() => {
+        const saved = localStorage.getItem('sidebar-collapsed');
+        if (saved !== null) setIsCollapsed(JSON.parse(saved));
+    }, []);
+
+    const toggleSidebar = () => {
+        const newState = !isCollapsed;
+        setIsCollapsed(newState);
+        localStorage.setItem('sidebar-collapsed', JSON.stringify(newState));
+    };
 
     useEffect(() => {
         if (status === 'authenticated') {
@@ -171,10 +184,9 @@ export default function Sidebar() {
 
     if (status === 'loading') {
         return (
-            <aside style={{ height: '100%', width: '260px', backgroundColor: 'var(--sidebar-bg)', borderRight: '1px solid var(--border-color)', padding: '20px', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ height: '40px', backgroundColor: 'var(--surface-color)', borderRadius: '8px', marginBottom: '20px', opacity: 0.5 }}></div>
-                <div style={{ height: '20px', width: '60%', backgroundColor: 'var(--surface-color)', borderRadius: '4px', marginBottom: '10px', opacity: 0.5 }}></div>
-                <div style={{ height: '20px', width: '80%', backgroundColor: 'var(--surface-color)', borderRadius: '4px', marginBottom: '10px', opacity: 0.5 }}></div>
+            <aside style={{ height: '100%', width: isCollapsed ? '70px' : '260px', backgroundColor: 'var(--sidebar-bg)', borderRight: '1px solid var(--border-color)', padding: isCollapsed ? '10px 5px' : '20px', display: 'flex', flexDirection: 'column', transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}>
+                <div style={{ height: '40px', backgroundColor: 'var(--surface-color)', borderRadius: '8px', marginBottom: '20px', opacity: 0.2 }}></div>
+                <div style={{ height: '20px', width: '60%', backgroundColor: 'var(--surface-color)', borderRadius: '4px', marginBottom: '10px', opacity: 0.2 }}></div>
             </aside>
         );
     }
@@ -182,77 +194,140 @@ export default function Sidebar() {
     return (
         <aside style={{
             height: '100%',
-            width: '260px',
+            width: isCollapsed ? '70px' : '260px',
             backgroundColor: 'var(--sidebar-bg)',
             display: 'flex',
             flexDirection: 'column',
             padding: '10px',
             borderRight: '1px solid var(--border-color)',
-            transition: 'width 0.3s ease',
-            flexShrink: 0
+            transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            flexShrink: 0,
+            overflowX: 'hidden'
         }}>
-            {/* Brand Logo */}
-            <div style={{ padding: '15px 10px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                <img
-                    src="/logo.png"
-                    alt="Promptly AI Logo"
-                    style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'cover' }}
-                />
-                <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text-main)', margin: 0 }}>Promptly AI</h1>
+            {/* Header with Logo and Toggle */}
+            <div style={{
+                padding: '10px 5px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: isCollapsed ? 'center' : 'space-between',
+                marginBottom: '15px'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                    <img
+                        src="/logo.png"
+                        alt="Logo"
+                        style={{ width: '32px', height: '32px', borderRadius: '8px', flexShrink: 0 }}
+                    />
+                    {!isCollapsed && (
+                        <h1 style={{
+                            fontSize: '1.15rem',
+                            fontWeight: '700',
+                            color: 'var(--text-main)',
+                            margin: 0,
+                            whiteSpace: 'nowrap',
+                            opacity: isCollapsed ? 0 : 1,
+                            transition: 'opacity 0.2s'
+                        }}>
+                            Promptly AI
+                        </h1>
+                    )}
+                </div>
+
+                <button
+                    onClick={toggleSidebar}
+                    className="sidebar-toggle"
+                    style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        padding: '6px',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginLeft: isCollapsed ? 0 : '10px',
+                        transition: 'background 0.2s, transform 0.3s',
+                        transform: isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)'
+                    }}
+                >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div style={{
+                display: 'flex',
+                flexDirection: isCollapsed ? 'column' : 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '20px',
+                gap: isCollapsed ? '10px' : '0'
+            }}>
                 <div
                     onClick={handleNewChat}
+                    title={isCollapsed ? "New Chat" : ""}
                     style={{
-                        padding: '10px 14px',
-                        borderRadius: '8px',
+                        padding: isCollapsed ? '10px' : '10px 14px',
+                        borderRadius: '12px',
                         cursor: 'pointer',
                         border: '1px solid var(--border-color)',
                         display: 'flex',
                         alignItems: 'center',
+                        justifyContent: isCollapsed ? 'center' : 'flex-start',
                         gap: '10px',
                         color: 'var(--text-main)',
                         fontSize: '0.9rem',
-                        flex: 1,
-                        marginRight: '10px',
-                        transition: 'background 0.2s'
+                        flex: isCollapsed ? 'none' : 1,
+                        marginRight: isCollapsed ? 0 : '10px',
+                        transition: 'all 0.2s',
+                        width: isCollapsed ? '44px' : 'auto',
+                        height: isCollapsed ? '44px' : 'auto'
                     }}
                     className="new-chat-btn"
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--surface-color)'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
-                    <span style={{ fontSize: '1.2rem' }}>+</span> New Chat
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    {!isCollapsed && <span>New Chat</span>}
                 </div>
                 <ThemeToggle />
             </div>
 
             <div style={{ flex: 1, overflowY: 'auto', padding: '0 5px' }}>
                 {!session ? (
-                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                        <p style={{ marginBottom: '10px' }}>Log in to save chat history.</p>
-                        <Link href="/login" style={{ color: 'var(--primary-color)', textDecoration: 'none' }}>Login</Link>
-                    </div>
+                    !isCollapsed && (
+                        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                            <p style={{ marginBottom: '10px' }}>Log in to save chat history.</p>
+                            <Link href="/login" style={{ color: 'var(--primary-color)', textDecoration: 'none' }}>Login</Link>
+                        </div>
+                    )
                 ) : (
                     Object.entries(groupedChats).map(([label, list]) => (
                         list.length > 0 && (
                             <div key={label} style={{ marginBottom: '20px' }}>
-                                <p style={{
-                                    color: 'var(--text-secondary)',
-                                    fontSize: '0.75rem',
-                                    fontWeight: 'bold',
-                                    padding: '0 10px 8px',
-                                    textTransform: 'uppercase'
-                                }}>{label}</p>
+                                {!isCollapsed && (
+                                    <p style={{
+                                        color: 'var(--text-secondary)',
+                                        fontSize: '0.7rem',
+                                        fontWeight: 'bold',
+                                        padding: '0 10px 8px',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.05em'
+                                    }}>{label}</p>
+                                )}
                                 {list.map(chat => (
                                     <div
                                         key={chat.id}
                                         onClick={() => router.push(`/c/${chat.id}`)}
                                         onMouseEnter={() => setHoveredChatId(chat.id)}
                                         onMouseLeave={() => setHoveredChatId(null)}
+                                        title={isCollapsed ? chat.title : ""}
                                         style={{
-                                            padding: '10px 14px',
-                                            borderRadius: '8px',
+                                            padding: isCollapsed ? '10px' : '10px 14px',
+                                            borderRadius: '10px',
                                             cursor: 'pointer',
                                             color: 'var(--text-main)',
                                             fontSize: '0.9rem',
@@ -261,62 +336,68 @@ export default function Sidebar() {
                                             position: 'relative',
                                             display: 'flex',
                                             alignItems: 'center',
-                                            justifyContent: 'space-between',
-                                            minHeight: '40px'
+                                            justifyContent: isCollapsed ? 'center' : 'space-between',
+                                            minHeight: '40px',
+                                            transition: 'background 0.2s'
                                         }}
                                     >
-                                        {editingChatId === chat.id ? (
-                                            <input
-                                                ref={editInputRef}
-                                                type="text"
-                                                value={editValue}
-                                                onChange={(e) => setEditValue(e.target.value)}
-                                                onBlur={() => saveEditing(chat.id)}
-                                                onKeyDown={(e) => handleKeyDown(e, chat.id)}
-                                                onClick={(e) => e.stopPropagation()}
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '4px',
-                                                    borderRadius: '4px',
-                                                    border: '1px solid var(--primary-color)',
-                                                    backgroundColor: 'var(--input-bg)',
-                                                    color: 'var(--text-main)',
-                                                    fontSize: '0.9rem',
-                                                    outline: 'none'
-                                                }}
-                                            />
+                                        {isCollapsed ? (
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: currentChatId === chat.id ? 1 : 0.6 }}>
+                                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                            </svg>
                                         ) : (
-                                            <>
-                                                <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1, paddingRight: '10px' }}>
-                                                    {chat.title}
-                                                </div>
-
-                                                {/* Action Icons - Visible on hover or when active */}
-                                                {(hoveredChatId === chat.id || currentChatId === chat.id) && (
-                                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                                        <button
-                                                            onClick={(e) => startEditing(e, chat)}
-                                                            title="Rename"
-                                                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: 0, display: 'flex' }}
-                                                        >
-                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                                            </svg>
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => confirmDelete(e, chat.id)}
-                                                            title="Delete"
-                                                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: 0, display: 'flex' }}
-                                                        >
-                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                                <polyline points="3 6 5 6 21 6"></polyline>
-                                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                                            </svg>
-                                                        </button>
+                                            editingChatId === chat.id ? (
+                                                <input
+                                                    ref={editInputRef}
+                                                    type="text"
+                                                    value={editValue}
+                                                    onChange={(e) => setEditValue(e.target.value)}
+                                                    onBlur={() => saveEditing(chat.id)}
+                                                    onKeyDown={(e) => handleKeyDown(e, chat.id)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '4px',
+                                                        borderRadius: '4px',
+                                                        border: '1px solid var(--primary-color)',
+                                                        backgroundColor: 'var(--input-bg)',
+                                                        color: 'var(--text-main)',
+                                                        fontSize: '0.9rem',
+                                                        outline: 'none'
+                                                    }}
+                                                />
+                                            ) : (
+                                                <>
+                                                    <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1, paddingRight: '10px' }}>
+                                                        {chat.title}
                                                     </div>
-                                                )}
-                                            </>
+
+                                                    {(hoveredChatId === chat.id || currentChatId === chat.id) && (
+                                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                                            <button
+                                                                onClick={(e) => startEditing(e, chat)}
+                                                                title="Rename"
+                                                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: 0 }}
+                                                            >
+                                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                                </svg>
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => confirmDelete(e, chat.id)}
+                                                                title="Delete"
+                                                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: 0 }}
+                                                            >
+                                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                                </svg>
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )
                                         )}
                                     </div>
                                 ))}
@@ -333,22 +414,25 @@ export default function Sidebar() {
                     marginTop: 'auto',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '10px'
+                    justifyContent: isCollapsed ? 'center' : 'flex-start',
+                    gap: '12px'
                 }}>
                     {session.user.image ? (
-                        <img src={session.user.image} alt="Avatar" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+                        <img src={session.user.image} alt="Avatar" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                     ) : (
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', flexShrink: 0 }}>
                             {session.user.name?.[0]?.toUpperCase() || 'U'}
                         </div>
                     )}
-                    <div style={{ flex: 1, overflow: 'hidden' }}>
-                        <div style={{ color: 'var(--text-main)', fontSize: '0.9rem', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.user.name}</div>
-                        <div style={{ display: 'flex', gap: '8px', fontSize: '0.8rem' }}>
-                            <Link href={`/profile?chatId=${currentChatId || ''}`} style={{ color: 'var(--text-secondary)', textDecoration: 'underline' }}>Profile</Link>
-                            <span style={{ color: 'var(--text-secondary)', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => signOut()}>Logout</span>
+                    {!isCollapsed && (
+                        <div style={{ flex: 1, overflow: 'hidden' }}>
+                            <div style={{ color: 'var(--text-main)', fontSize: '0.9rem', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.user.name}</div>
+                            <div style={{ display: 'flex', gap: '10px', marginTop: '2px' }}>
+                                <Link href={`/profile?chatId=${currentChatId || ''}`} style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', textDecoration: 'none' }} className="hover-link">Profile</Link>
+                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', cursor: 'pointer' }} className="hover-link" onClick={() => signOut()}>Logout</span>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             )}
         </aside>

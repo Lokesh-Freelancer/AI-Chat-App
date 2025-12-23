@@ -45,7 +45,7 @@ function ChatContent() {
                 const uiMessages = data.messages.map(m => ({
                     id: m.id,
                     role: m.role,
-                    text: m.content,
+                    text: m.text,
                     image: m.image
                 }));
 
