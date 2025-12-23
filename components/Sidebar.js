@@ -14,6 +14,7 @@ export default function Sidebar() {
     const [hoveredChatId, setHoveredChatId] = useState(null);
     const [isCreating, setIsCreating] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isHeaderHovered, setIsHeaderHovered] = useState(false);
     const editInputRef = useRef(null);
     const router = useRouter();
     const params = useParams();
@@ -205,98 +206,153 @@ export default function Sidebar() {
             overflowX: 'hidden'
         }}>
             {/* Header with Logo and Toggle */}
-            <div style={{
-                padding: '10px 5px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: isCollapsed ? 'center' : 'space-between',
-                marginBottom: '15px'
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
-                    <img
-                        src="/logo.png"
-                        alt="Logo"
-                        style={{ width: '32px', height: '32px', borderRadius: '8px', flexShrink: 0 }}
-                    />
-                    {!isCollapsed && (
-                        <h1 style={{
-                            fontSize: '1.15rem',
-                            fontWeight: '700',
-                            color: 'var(--text-main)',
-                            margin: 0,
-                            whiteSpace: 'nowrap',
-                            opacity: isCollapsed ? 0 : 1,
-                            transition: 'opacity 0.2s'
-                        }}>
-                            Promptly AI
-                        </h1>
-                    )}
-                </div>
+            <div
+                onMouseEnter={() => setIsHeaderHovered(true)}
+                onMouseLeave={() => setIsHeaderHovered(false)}
+                style={{
+                    padding: '10px 5px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: isCollapsed ? 'center' : 'space-between',
+                    marginBottom: '15px',
+                    minHeight: '48px',
+                    position: 'relative'
+                }}
+            >
+                {isCollapsed ? (
+                    <div style={{ position: 'relative', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {/* Logo - Hide on Hover */}
+                        <img
+                            src="/logo.png"
+                            alt="Logo"
+                            style={{
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '8px',
+                                flexShrink: 0,
+                                opacity: isHeaderHovered ? 0 : 1,
+                                visibility: isHeaderHovered ? 'hidden' : 'visible',
+                                transition: 'opacity 0.2s ease, visibility 0.2s',
+                                position: 'absolute'
+                            }}
+                        />
+                        {/* Toggle Icon - Show on Hover */}
+                        <button
+                            onClick={toggleSidebar}
+                            className="sidebar-toggle"
+                            title="Expand Sidebar"
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                color: 'var(--text-secondary)',
+                                cursor: 'pointer',
+                                padding: '6px',
+                                borderRadius: '8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                opacity: isHeaderHovered ? 1 : 0,
+                                visibility: isHeaderHovered ? 'visible' : 'hidden',
+                                transition: 'opacity 0.2s ease, visibility 0.2s',
+                                position: 'absolute',
+                                width: '100%',
+                                height: '100%'
+                            }}
+                        >
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <line x1="9" y1="3" x2="9" y2="21" />
+                                <path d="M12 15l3-3-3-3" />
+                            </svg>
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                            <img
+                                src="/logo.png"
+                                alt="Logo"
+                                style={{ width: '30px', height: '30px', borderRadius: '6px', flexShrink: 0 }}
+                            />
+                            <h1 style={{
+                                fontSize: '1.1rem',
+                                fontWeight: '700',
+                                color: 'var(--text-main)',
+                                margin: 0,
+                                whiteSpace: 'nowrap'
+                            }}>
+                                Promptly AI
+                            </h1>
+                        </div>
 
-                <button
-                    onClick={toggleSidebar}
-                    className="sidebar-toggle"
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--text-secondary)',
-                        cursor: 'pointer',
-                        padding: '6px',
-                        borderRadius: '6px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginLeft: isCollapsed ? 0 : '10px',
-                        transition: 'background 0.2s, transform 0.3s',
-                        transform: isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)'
-                    }}
-                >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
-                </button>
+                        <button
+                            onClick={toggleSidebar}
+                            className="sidebar-toggle"
+                            title="Collapse Sidebar"
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                color: 'var(--text-secondary)',
+                                cursor: 'pointer',
+                                padding: '6px',
+                                borderRadius: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'background 0.2s, color 0.2s',
+                            }}
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <line x1="9" y1="3" x2="9" y2="21" />
+                                <path d="M15 15l-3-3 3-3" />
+                            </svg>
+                        </button>
+                    </>
+                )}
             </div>
 
             <div style={{
                 display: 'flex',
-                flexDirection: isCollapsed ? 'column' : 'row',
-                justifyContent: 'space-between',
+                flexDirection: 'column',
                 alignItems: 'center',
                 marginBottom: '20px',
-                gap: isCollapsed ? '10px' : '0'
+                padding: '0 5px'
             }}>
                 <div
                     onClick={handleNewChat}
-                    title={isCollapsed ? "New Chat" : ""}
+                    title={isCollapsed ? "New chat" : ""}
                     style={{
-                        padding: isCollapsed ? '10px' : '10px 14px',
+                        padding: isCollapsed ? '10px' : '12px 14px',
                         borderRadius: '12px',
                         cursor: 'pointer',
-                        border: '1px solid var(--border-color)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: isCollapsed ? 'center' : 'flex-start',
-                        gap: '10px',
+                        gap: '12px',
                         color: 'var(--text-main)',
-                        fontSize: '0.9rem',
-                        flex: isCollapsed ? 'none' : 1,
-                        marginRight: isCollapsed ? 0 : '10px',
-                        transition: 'all 0.2s',
-                        width: isCollapsed ? '44px' : 'auto',
-                        height: isCollapsed ? '44px' : 'auto'
+                        fontSize: '0.95rem',
+                        fontWeight: '500',
+                        width: isCollapsed ? '44px' : '100%',
+                        height: isCollapsed ? '44px' : 'auto',
+                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
-                    className="new-chat-btn"
+                    className="new-chat-btn-hover"
                 >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                     </svg>
-                    {!isCollapsed && <span>New Chat</span>}
+                    {!isCollapsed && <span>New chat</span>}
                 </div>
-                <ThemeToggle />
+                {!isCollapsed && (
+                    <div style={{ marginTop: '12px', width: '100%' }}>
+                        <ThemeToggle />
+                    </div>
+                )}
             </div>
 
-            <div style={{ flex: 1, overflowY: 'auto', padding: '0 5px' }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '0 5px', display: isCollapsed ? 'none' : 'block' }}>
                 {!session ? (
                     !isCollapsed && (
                         <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
@@ -325,6 +381,7 @@ export default function Sidebar() {
                                         onMouseEnter={() => setHoveredChatId(chat.id)}
                                         onMouseLeave={() => setHoveredChatId(null)}
                                         title={isCollapsed ? chat.title : ""}
+                                        className="chat-item-hover"
                                         style={{
                                             padding: isCollapsed ? '10px' : '10px 14px',
                                             borderRadius: '10px',
@@ -338,7 +395,6 @@ export default function Sidebar() {
                                             alignItems: 'center',
                                             justifyContent: isCollapsed ? 'center' : 'space-between',
                                             minHeight: '40px',
-                                            transition: 'background 0.2s'
                                         }}
                                     >
                                         {isCollapsed ? (
@@ -408,15 +464,18 @@ export default function Sidebar() {
             </div>
 
             {session && (
-                <div style={{
-                    padding: '15px 10px',
-                    borderTop: '1px solid var(--border-color)',
-                    marginTop: 'auto',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: isCollapsed ? 'center' : 'flex-start',
-                    gap: '12px'
-                }}>
+                <div
+                    title={isCollapsed ? session.user.name : ""}
+                    style={{
+                        padding: '15px 10px',
+                        borderTop: isCollapsed ? 'none' : '1px solid var(--border-color)',
+                        marginTop: 'auto',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: isCollapsed ? 'center' : 'flex-start',
+                        gap: '12px'
+                    }}
+                >
                     {session.user.image ? (
                         <img src={session.user.image} alt="Avatar" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                     ) : (

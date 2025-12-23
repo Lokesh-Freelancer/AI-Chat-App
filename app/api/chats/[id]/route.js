@@ -13,14 +13,12 @@ export async function GET(req, { params }) {
     }
 
     // Verify chat belongs to user and get title
-    console.log(`[GET /api/chats/${chatId}] Fetching chat for session user: ${session.user.id}`);
     const chat = await prisma.chat.findUnique({
         where: { id: chatId },
         select: { userId: true, title: true }
     });
 
     if (!chat || chat.userId !== session.user.id) {
-        console.warn(`[GET /api/chats/${chatId}] Permission denied or not found. Chat User: ${chat?.userId}`);
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -29,7 +27,6 @@ export async function GET(req, { params }) {
         orderBy: { createdAt: 'asc' },
         select: { id: true, role: true, content: true, image: true }
     });
-    console.log(`[GET /api/chats/${chatId}] Found ${messages.length} messages`);
 
     const uiMessages = messages.map(m => ({ id: m.id, role: m.role, text: m.content, image: m.image }));
 
@@ -52,8 +49,6 @@ export async function POST(req, { params }) {
 
     try {
         const { role, content, image } = await req.json();
-
-        console.log(`[Message Save] Role: ${role}, Content Length: ${content?.length || 0}, Has Image: ${!!image}`);
 
         const message = await prisma.message.create({
             data: {

@@ -174,16 +174,18 @@ export default function MessageBubble({ message }) {
                     </div>
                 )}
                 {isUser ? (
-                    <div>{message.text}</div>
+                    <div style={{ whiteSpace: 'pre-wrap' }}>{message.text}</div>
                 ) : (
-                    <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                            code: CodeBlock
-                        }}
-                    >
-                        {message.text}
-                    </ReactMarkdown>
+                    <div className="markdown-container">
+                        <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                                code: CodeBlock
+                            }}
+                        >
+                            {message.text}
+                        </ReactMarkdown>
+                    </div>
                 )}
             </div>
         </div>

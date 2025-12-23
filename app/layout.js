@@ -1,4 +1,7 @@
 import './globals.css';
+import { Inter } from 'next/font/google';
+
+const inter = Inter({ subsets: ['latin'] });
 
 export const viewport = {
   width: 'device-width',
@@ -52,7 +55,7 @@ import Sidebar from '@/components/Sidebar';
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body style={{ margin: 0, padding: 0, overflow: 'hidden' }}>
+      <body className={inter.className} style={{ margin: 0, padding: 0, overflow: 'hidden' }}>
         <Providers>
           <div className="layout-container" style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden' }}>
             <Sidebar />

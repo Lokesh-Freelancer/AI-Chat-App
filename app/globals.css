@@ -11,7 +11,7 @@
   --user-msg-bg: #2d2e2f;
   --ai-msg-bg: transparent;
 
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* No need for --font-sans here anymore as we use next/font */
 }
 
 [data-theme='light'] {
@@ -33,12 +33,14 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  /* Ultimate Sharpness */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   background-color: var(--bg-color);
   color: var(--text-main);
-  font-family: var(--font-sans);
   height: 100vh;
   overflow: hidden;
   display: flex;
@@ -108,4 +110,120 @@ body {
   40% {
     transform: scale(1);
   }
+}
+
+/* Sidebar Polishing */
+.chat-item-hover {
+  transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.chat-item-hover:hover {
+  background-color: var(--surface-color) !important;
+}
+
+.new-chat-btn-hover:hover {
+  background-color: var(--surface-color) !important;
+}
+
+.sidebar-toggle:hover {
+  background-color: var(--surface-color) !important;
+}
+
+/* --- Markdown Rendering Styles --- */
+.ai-msg h1,
+.ai-msg h2,
+.ai-msg h3 {
+  margin-top: 24px;
+  margin-bottom: 12px;
+  color: var(--text-main);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.ai-msg h1 {
+  font-size: 1.6rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+}
+
+.ai-msg h2 {
+  font-size: 1.4rem;
+}
+
+.ai-msg h3 {
+  font-size: 1.2rem;
+}
+
+.ai-msg p {
+  margin-bottom: 16px;
+  line-height: 1.7;
+}
+
+.ai-msg ul,
+.ai-msg ol {
+  margin-bottom: 16px;
+  padding-left: 24px;
+}
+
+.ai-msg li {
+  margin-bottom: 8px;
+}
+
+.ai-msg hr {
+  border: 0;
+  border-top: 1px solid var(--border-color);
+  margin: 24px 0;
+}
+
+.ai-msg a {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.ai-msg a:hover {
+  text-decoration: underline;
+}
+
+.ai-msg strong {
+  color: var(--text-main);
+  font-weight: 700;
+  /* Crisp bold */
+}
+
+.ai-msg blockquote {
+  border-left: 4px solid var(--border-color);
+  padding: 8px 16px;
+  margin: 16px 0;
+  color: var(--text-secondary);
+  background-color: rgba(255, 255, 255, 0.03);
+  border-radius: 0 8px 8px 0;
+}
+
+.ai-msg table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 0.9rem;
+}
+
+.ai-msg th,
+.ai-msg td {
+  border: 1px solid var(--border-color);
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.ai-msg th {
+  background-color: var(--surface-color);
+  font-weight: 600;
+}
+
+/* Message Bubble specific spacing */
+.ai-msg>*:first-child {
+  margin-top: 0;
+}
+
+.ai-msg>*:last-child {
+  margin-bottom: 0;
 }
