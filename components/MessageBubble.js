@@ -6,6 +6,54 @@ import { useState } from 'react';
 
 export default function MessageBubble({ message }) {
     const isUser = message.role === 'user';
+    const [isSpeaking, setIsSpeaking] = useState(false);
+    const [isSupported, setIsSupported] = useState(false);
+
+    // Check if Speech Synthesis is supported
+    useState(() => {
+        if (typeof window !== 'undefined' && window.speechSynthesis) {
+            setIsSupported(true);
+        }
+    }, []);
+
+    const speakMessage = () => {
+        if (!isSupported) {
+            alert('Text-to-speech is not supported in your browser.');
+            return;
+        }
+
+        // Stop if already speaking
+        if (isSpeaking) {
+            window.speechSynthesis.cancel();
+            setIsSpeaking(false);
+            return;
+        }
+
+        // Clean text for speech (remove markdown formatting)
+        const textToSpeak = message.text
+            .replace(/```[\s\S]*?```/g, '') // Remove code blocks
+            .replace(/`[^`]+`/g, '') // Remove inline code
+            .replace(/[#*_~]/g, '') // Remove markdown symbols
+            .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // Convert links to text
+            .trim();
+
+        if (!textToSpeak) {
+            alert('No text to speak.');
+            return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+        utterance.lang = 'en-US';
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+
+        utterance.onstart = () => setIsSpeaking(true);
+        utterance.onend = () => setIsSpeaking(false);
+        utterance.onerror = () => setIsSpeaking(false);
+
+        window.speechSynthesis.speak(utterance);
+    };
 
     const CopyButton = ({ text }) => {
         const [copied, setCopied] = useState(false);
@@ -96,7 +144,46 @@ export default function MessageBubble({ message }) {
                 borderTopRightRadius: isUser ? '4px' : '18px',
                 borderTopLeftRadius: isUser ? '18px' : '4px',
                 overflowWrap: 'break-word',
+                position: 'relative'
             }}>
+                {/* Speaker button for AI messages */}
+                {!isUser && isSupported && message.text && (
+                    <button
+                        onClick={speakMessage}
+                        className={isSpeaking ? 'speaker-active' : ''}
+                        style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            background: 'var(--surface-color)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '6px',
+                            padding: '6px',
+                            cursor: 'pointer',
+                            color: isSpeaking ? 'var(--primary-color)' : 'var(--text-secondary)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s',
+                            zIndex: 10
+                        }}
+                        onMouseEnter={(e) => !isSpeaking && (e.currentTarget.style.color = 'var(--text-main)')}
+                        onMouseLeave={(e) => !isSpeaking && (e.currentTarget.style.color = 'var(--text-secondary)')}
+                        title={isSpeaking ? 'Stop speaking' : 'Read aloud'}
+                    >
+                        {isSpeaking ? (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="6" y="4" width="4" height="16"></rect>
+                                <rect x="14" y="4" width="4" height="16"></rect>
+                            </svg>
+                        ) : (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                            </svg>
+                        )}
+                    </button>
+                )}
                 {message.image && typeof message.image === 'string' && (
                     <div style={{ marginBottom: '12px' }}>
                         {message.image.startsWith('data:application/pdf') ? (

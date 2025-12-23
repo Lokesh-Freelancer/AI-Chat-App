@@ -1,9 +1,100 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 export default function InputArea({ onSend, loading }) {
     const [input, setInput] = useState('');
     const [image, setImage] = useState(null); // { name, base64 }
+    const [isRecording, setIsRecording] = useState(false);
+    const [isSupported, setIsSupported] = useState(false);
     const fileInputRef = useRef(null);
+    const recognitionRef = useRef(null);
+
+    // Check if Speech Recognition is supported
+    useEffect(() => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            console.log('✅ Speech Recognition is supported');
+            setIsSupported(true);
+            recognitionRef.current = new SpeechRecognition();
+            recognitionRef.current.continuous = true; // Changed to true for better detection
+            recognitionRef.current.interimResults = true;
+            recognitionRef.current.lang = 'en-US';
+            recognitionRef.current.maxAlternatives = 1;
+
+            recognitionRef.current.onstart = () => {
+                console.log('🎤 Recording started');
+            };
+
+            recognitionRef.current.onresult = (event) => {
+                console.log('📝 Speech recognition result:', event);
+                const transcript = Array.from(event.results)
+                    .map(result => result[0])
+                    .map(result => result.transcript)
+                    .join('');
+                console.log('✅ Transcribed text:', transcript);
+                setInput(transcript);
+            };
+
+            recognitionRef.current.onerror = (event) => {
+                console.error('❌ Speech recognition error:', event.error);
+                console.error('Error details:', event);
+
+                // Don't stop recording on no-speech error, just log it
+                if (event.error === 'no-speech') {
+                    console.warn('⚠️ No speech detected yet, keep speaking...');
+                    return; // Don't stop recording or show alert
+                }
+
+                setIsRecording(false);
+
+                // User-friendly error messages for critical errors only
+                if (event.error === 'not-allowed') {
+                    alert('Microphone access denied. Please allow microphone permission in your browser settings.');
+                } else if (event.error === 'network') {
+                    alert('Network error. Speech recognition requires internet connection.');
+                } else if (event.error === 'aborted') {
+                    console.log('Recording was aborted');
+                } else {
+                    alert(`Speech recognition error: ${event.error}`);
+                }
+            };
+
+            recognitionRef.current.onend = () => {
+                console.log('🛑 Recording stopped');
+                setIsRecording(false);
+            };
+        } else {
+            console.warn('⚠️ Speech Recognition is NOT supported in this browser');
+        }
+
+        return () => {
+            if (recognitionRef.current) {
+                recognitionRef.current.stop();
+            }
+        };
+    }, []);
+
+    const toggleRecording = () => {
+        if (!isSupported) {
+            alert('Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
+            return;
+        }
+
+        if (isRecording) {
+            console.log('Stopping recording...');
+            recognitionRef.current.stop();
+            setIsRecording(false);
+        } else {
+            console.log('Starting recording...');
+            try {
+                recognitionRef.current.start();
+                setIsRecording(true);
+                console.log('✅ Recording started successfully');
+            } catch (error) {
+                console.error('❌ Failed to start recording:', error);
+                alert('Failed to start recording. Please check microphone permissions and try again.');
+            }
+        }
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -171,6 +262,35 @@ export default function InputArea({ onSend, loading }) {
                             <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
                         </svg>
                     </button>
+
+                    {isSupported && (
+                        <button
+                            onClick={toggleRecording}
+                            className={isRecording ? 'mic-recording' : ''}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                padding: '8px',
+                                cursor: 'pointer',
+                                color: isRecording ? '#ff4444' : 'var(--text-secondary)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'color 0.2s',
+                                position: 'relative'
+                            }}
+                            onMouseEnter={(e) => !isRecording && (e.currentTarget.style.color = 'var(--text-main)')}
+                            onMouseLeave={(e) => !isRecording && (e.currentTarget.style.color = 'var(--text-secondary)')}
+                            title={isRecording ? 'Stop recording' : 'Start voice input'}
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                <line x1="12" y1="19" x2="12" y2="23"></line>
+                                <line x1="8" y1="23" x2="16" y2="23"></line>
+                            </svg>
+                        </button>
+                    )}
 
                     <textarea
                         value={input}
