@@ -61,7 +61,7 @@ function ChatContent() {
 
                 // If trigger is true and we only have one user message
                 if (shouldTriggerAI && uiMessages.length === 1 && uiMessages[0].role === 'user') {
-                    handleSendMessage(uiMessages[0].text, true);
+                    handleSendMessage(uiMessages[0].text, uiMessages[0].image || null, true);
                     router.replace(`/c/${id}`);
                 }
             } else {
@@ -83,18 +83,21 @@ function ChatContent() {
         setLoading(true);
 
         try {
-            // Save User Message to DB
-            if (chatId && session) {
+            // Save User Message to DB (Only if it's a NEW message from the UI, not an auto-trigger)
+            if (chatId && session && !isAutoTrigger) {
                 const saveRes = await fetch(`/api/chats/${chatId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ role: 'user', content: text, image }),
                 });
-                const saveData = await saveRes.json();
-                if (saveData.updatedTitle) {
-                    document.title = `${saveData.updatedTitle} | Promptly AI`;
+
+                if (saveRes.ok) {
+                    const saveData = await saveRes.json();
+                    if (saveData.updatedTitle) {
+                        document.title = `${saveData.updatedTitle} | Promptly AI`;
+                    }
+                    window.dispatchEvent(new CustomEvent('chatUpdated'));
                 }
-                window.dispatchEvent(new CustomEvent('chatUpdated'));
             }
 
             // Get AI Response
@@ -120,11 +123,15 @@ function ChatContent() {
             }
 
             if (chatId && session) {
-                await fetch(`/api/chats/${chatId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ role: 'ai', content: aiText }),
-                });
+                try {
+                    await fetch(`/api/chats/${chatId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ role: 'ai', content: aiText }),
+                    });
+                } catch (saveErr) {
+                    console.error("Failed to save AI response:", saveErr);
+                }
             }
         } catch (error) {
             console.error('Error:', error);

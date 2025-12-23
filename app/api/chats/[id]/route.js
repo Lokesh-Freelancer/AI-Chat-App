@@ -50,11 +50,13 @@ export async function POST(req, { params }) {
     try {
         const { role, content, image } = await req.json();
 
+        console.log(`[Message Save] Role: ${role}, Content Length: ${content?.length || 0}, Has Image: ${!!image}`);
+
         const message = await prisma.message.create({
             data: {
                 chatId,
                 role,
-                content,
+                content: content || "",
                 image: image || null
             }
         });

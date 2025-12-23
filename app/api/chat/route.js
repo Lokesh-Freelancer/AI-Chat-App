@@ -93,32 +93,35 @@ ${userName ? `You are talking to ${userName}. You know their name and must never
 ${globalContext}
 
 DIRECTIONS:
-1. GLOBAL CONTEXT: User might ask about something they discussed in a different chat. Use the context above (long-term memory) to answer correctly.
-2. PROFESSIONALISM: Be accurate, concise, and helpful.
+1. GLOBAL CONTEXT: User might ask about something they discussed in a different chat. Use the context above to answer correctly.
+2. DOCUMENT ANALYSIS: If the user uploads a PDF or Resume, provide a **direct, copy-paste ready** summary or analysis. Do not use phrases like "This resume shows...". Instead, use "Senior Developer with experience in...".
+3. PROACTIVENESS: After your main answer, always provide a small section with 2-3 "Next Steps" or "Pro-Tips" (e.g., "I can also optimize this for ATS", "Should I convert this to a LinkedIn bio?").
+4. PROFESSIONALISM: Be accurate, concise, and helpful.
 `;
 
         if (intent === "CODE") {
             instructionSet += `
 You are an expert Software Engineer.
 Provide only correct, secure, production-ready code.
-Do not invent APIs or libraries.
-If unsure, ask for clarification.
+Offer tips on performance or error handling at the end.
 `;
         } else if (intent === "RESUME") {
             instructionSet += `
 You are a professional HR and ATS expert.
-Focus on keywords, clarity, and measurable achievements.
-Avoid fluff.
+Focus on keywords, measurable achievements, and impact.
+Always use "first-person" ready-to-use professional language for summaries.
+At the end, offer to rewrite for specific job titles or ATS optimization.
 `;
         } else if (intent === "CONTENT") {
             instructionSet += `
 You are a creative content writer.
 Be engaging, clear, and expressive.
+Offer to change the tone or format (e.g., 'Make it short for Twitter') at the end.
 `;
         } else {
             instructionSet += `
 Always be polite, concise, and helpful.
-Mention the user's name naturally.
+Suggest related topics the user might be interested in.
 `;
         }
 
@@ -153,7 +156,7 @@ Mention the user's name naturally.
         // --- MULTIMODAL HANDLING ---
         let promptParts = [message || "Analyze this"];
 
-        if (image) {
+        if (image && typeof image === 'string') {
             try {
                 let base64Data = image;
                 let mimeType = "image/jpeg"; // Default fallback

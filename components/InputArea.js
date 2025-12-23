@@ -24,8 +24,8 @@ export default function InputArea({ onSend, loading }) {
         const file = e.target.files[0];
         if (!file) return;
 
-        if (file.size > 5 * 1024 * 1024) { // 5MB limit
-            alert("Image size should be less than 5MB");
+        if (file.size > 10 * 1024 * 1024) { // 10MB limit for docs
+            alert("File size should be less than 10MB");
             return;
         }
 
@@ -33,6 +33,7 @@ export default function InputArea({ onSend, loading }) {
         reader.onloadend = () => {
             setImage({
                 name: file.name,
+                type: file.type,
                 base64: reader.result
             });
         };
@@ -60,7 +61,7 @@ export default function InputArea({ onSend, loading }) {
                 flexDirection: 'column',
                 gap: '10px'
             }}>
-                {/* Image Preview */}
+                {/* File Preview */}
                 {image && (
                     <div style={{
                         width: 'fit-content',
@@ -69,30 +70,64 @@ export default function InputArea({ onSend, loading }) {
                         overflow: 'hidden',
                         border: '1px solid var(--border-color)',
                         backgroundColor: 'var(--surface-color)',
-                        padding: '4px'
+                        padding: image.type === 'application/pdf' ? '12px' : '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        minWidth: image.type === 'application/pdf' ? '200px' : 'auto'
                     }}>
-                        <img
-                            src={image.base64}
-                            alt="Preview"
-                            style={{ maxWidth: '120px', maxHeight: '120px', borderRadius: '8px', display: 'block' }}
-                        />
+                        {image.type === 'application/pdf' ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
+                                <div style={{
+                                    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+                                    padding: '8px',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                    </svg>
+                                </div>
+                                <span style={{
+                                    fontSize: '0.85rem',
+                                    color: 'var(--text-main)',
+                                    maxWidth: '120px',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    fontWeight: '500'
+                                }}>
+                                    {image.name}
+                                </span>
+                            </div>
+                        ) : (
+                            <img
+                                src={image.base64}
+                                alt="Preview"
+                                style={{ maxWidth: '120px', maxHeight: '120px', borderRadius: '8px', display: 'block' }}
+                            />
+                        )}
                         <button
                             onClick={removeImage}
                             style={{
                                 position: 'absolute',
-                                top: '8px',
-                                right: '8px',
+                                top: '4px',
+                                right: '4px',
                                 background: 'rgba(0,0,0,0.6)',
                                 color: '#fff',
                                 border: 'none',
                                 borderRadius: '50%',
-                                width: '24px',
-                                height: '24px',
+                                width: '20px',
+                                height: '20px',
                                 cursor: 'pointer',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                fontSize: '14px'
+                                fontSize: '12px',
+                                zIndex: 10
                             }}
                         >
                             ×
@@ -112,7 +147,7 @@ export default function InputArea({ onSend, loading }) {
                         type="file"
                         ref={fileInputRef}
                         onChange={handleFileChange}
-                        accept="image/*"
+                        accept="image/*,application/pdf"
                         style={{ display: 'none' }}
                     />
 
