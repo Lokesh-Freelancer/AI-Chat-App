@@ -73,8 +73,11 @@ function ChatContent() {
 
     // Initial Welcome Message for New Chat
     useEffect(() => {
-        setMessages([{ id: 'welcome', role: 'ai', text: getGreeting() }]);
-    }, [session?.user?.name, pathname]); // Reset when route changes
+        // Only reset messages when on home page
+        if (pathname === '/') {
+            setMessages([{ id: 'welcome', role: 'ai', text: getGreeting() }]);
+        }
+    }, [session?.user?.name, pathname]); // Reset when route changes to home
 
     const fetchMessages = async (chatId) => {
         try {
