@@ -16,7 +16,14 @@ export async function GET(req) {
         const chats = await prisma.chat.findMany({
             where: { userId: session.user.id },
             orderBy: { updatedAt: 'desc' },
-            select: { id: true, title: true, updatedAt: true }
+            select: {
+                id: true,
+                title: true,
+                updatedAt: true,
+                _count: {
+                    select: { messages: true }
+                }
+            }
         });
         return NextResponse.json(chats);
     } catch (error) {
@@ -33,24 +40,37 @@ export async function POST(req) {
     }
 
     try {
-        const { message } = await req.json(); // Optional: use first message to set title
-        const title = message ? message.slice(0, 30) + (message.length > 30 ? '...' : '') : "New Chat";
+        const { message, image } = await req.json();
 
-        // Generate a unique 6-char ID
+        // Smart Title Generation
+        let title = message
+            ? (message.length > 30 ? message.slice(0, 30) + '...' : message)
+            : "New Chat";
+
+        // Capitalize first letter
+        title = title.charAt(0).toUpperCase() + title.slice(1);
+
+        // Generate ID with collision check
         let shortId = generateShortId(6);
         let exists = await prisma.chat.findUnique({ where: { id: shortId } });
-
-        // Simple collision retry
         while (exists) {
             shortId = generateShortId(6);
             exists = await prisma.chat.findUnique({ where: { id: shortId } });
         }
 
+        // ONE-SHOT CREATION: Chat + First Message
         const chat = await prisma.chat.create({
             data: {
                 id: shortId,
                 userId: session.user.id,
                 title: title,
+                messages: {
+                    create: {
+                        role: 'user',
+                        content: message || "",
+                        image: image || null
+                    }
+                }
             }
         });
 

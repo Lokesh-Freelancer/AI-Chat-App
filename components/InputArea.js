@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 
-export default function InputArea({ onSend, loading }) {
+export default function InputArea({ onSend, loading, onStop }) {
     const [input, setInput] = useState('');
     const [image, setImage] = useState(null); // { name, base64 }
     const [isRecording, setIsRecording] = useState(false);
@@ -8,14 +8,14 @@ export default function InputArea({ onSend, loading }) {
     const fileInputRef = useRef(null);
     const recognitionRef = useRef(null);
 
-    // Check if Speech Recognition is supported
+
     useEffect(() => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
             console.log('✅ Speech Recognition is supported');
             setIsSupported(true);
             recognitionRef.current = new SpeechRecognition();
-            recognitionRef.current.continuous = true; // Changed to true for better detection
+            recognitionRef.current.continuous = true;
             recognitionRef.current.interimResults = true;
             recognitionRef.current.lang = 'en-US';
             recognitionRef.current.maxAlternatives = 1;
@@ -152,7 +152,7 @@ export default function InputArea({ onSend, loading }) {
                 flexDirection: 'column',
                 gap: '10px'
             }}>
-                {/* File Preview */}
+
                 {image && (
                     <div style={{
                         width: 'fit-content',
@@ -312,26 +312,32 @@ export default function InputArea({ onSend, loading }) {
                         rows={1}
                     />
                     <button
-                        onClick={handleSubmit}
-                        disabled={(!input.trim() && !image) || loading}
+                        onClick={loading ? onStop : handleSubmit}
+                        disabled={!loading && !input.trim() && !image}
                         style={{
-                            background: 'var(--primary-color)',
-                            border: 'none',
-                            borderRadius: '50%',
+                            background: loading ? 'transparent' : 'var(--primary-color)',
+                            border: loading ? '2px solid var(--text-main)' : 'none',
+                            borderRadius: loading ? '50%' : '50%',
                             width: '32px',
                             height: '32px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             marginLeft: '10px',
-                            cursor: (input.trim() || image) && !loading ? 'pointer' : 'default',
-                            opacity: (input.trim() || image) && !loading ? 1 : 0.5,
-                            transition: 'opacity 0.2s',
+                            cursor: (loading || input.trim() || image) ? 'pointer' : 'default',
+                            opacity: (loading || input.trim() || image) ? 1 : 0.5,
+                            transition: 'all 0.2s',
                         }}
                     >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z" fill="#ffffff" />
-                        </svg>
+                        {loading ? (
+
+                            <div style={{ width: '10px', height: '10px', backgroundColor: 'var(--text-main)', borderRadius: '2px' }}></div>
+                        ) : (
+
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z" fill="#ffffff" />
+                            </svg>
+                        )}
                     </button>
                 </div>
             </div>

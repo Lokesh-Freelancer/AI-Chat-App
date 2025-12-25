@@ -19,10 +19,21 @@ export default function ChatArea({ messages, loading, scrollRef }) {
 
                 {loading && (
                     <div style={{ padding: '0 20px', marginBottom: '24px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', paddingLeft: '18px' }}>
-                            <span className="typing-dot"></span>
-                            <span className="typing-dot"></span>
-                            <span className="typing-dot"></span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingLeft: '18px' }}>
+                            <div className="typing-dots-container" style={{ display: 'flex', gap: '4px' }}>
+                                <span className="typing-dot"></span>
+                                <span className="typing-dot"></span>
+                                <span className="typing-dot"></span>
+                            </div>
+                            {typeof loading === 'string' && (
+                                <span style={{
+                                    fontSize: '0.85rem',
+                                    color: 'var(--text-secondary)',
+                                    animation: 'pulse 1.5s infinite'
+                                }}>
+                                    {loading}
+                                </span>
+                            )}
                         </div>
                     </div>
                 )}

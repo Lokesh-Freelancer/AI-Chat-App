@@ -13,14 +13,41 @@ function ChatContent() {
     const params = useParams();
     const searchParams = useSearchParams();
     const [messages, setMessages] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [statusMessage, setStatusMessage] = useState(null);
     const scrollRef = useRef(null);
     const chatId = params.chatId;
     const trigger = searchParams.get('trigger');
+    const hasTriggeredRef = useRef(false);
+    const abortControllerRef = useRef(null);
+    const isStoppedRef = useRef(false);
 
     const getGreeting = () => {
         const name = session?.user?.name || 'there';
-        return `Hello ${name}, how can I help you today?`;
+        const isGuest = !session?.user?.name;
+
+        const lastVisit = localStorage.getItem('lastVisit');
+        const now = Date.now();
+
+        // Guest user ke liye simple greeting
+        if (isGuest) {
+            return "Hi there! How can I help you today?";
+        }
+
+        // Logged-in user ke liye personalized greeting
+        if (!lastVisit) {
+            return `Welcome ${name}! 👋 I'm here to help you with anything.`;
+        }
+
+        const hoursSinceLastVisit = (now - parseInt(lastVisit)) / (1000 * 60 * 60);
+
+        if (hoursSinceLastVisit < 1) {
+            return `Welcome back ${name}! Ready to continue?`;
+        } else if (hoursSinceLastVisit < 24) {
+            return `Hey ${name}! Good to see you again. What's on your mind?`;
+        } else {
+            return `Welcome back ${name}! It's been a while. How can I help?`;
+        }
     };
 
     // Auto-scroll
@@ -28,7 +55,16 @@ function ChatContent() {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
-    }, [messages, loading]);
+    }, [messages, isGenerating, statusMessage]);
+
+    // Cleanup abort controller on unmount
+    useEffect(() => {
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, []);
 
     // Load chat messages when ID changes
     useEffect(() => {
@@ -36,6 +72,16 @@ function ChatContent() {
             fetchMessages(chatId, trigger === 'true');
         }
     }, [chatId, session?.user?.name]);
+
+    const handleStop = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
+        isStoppedRef.current = true;
+        setIsGenerating(false);
+        setStatusMessage(null);
+    };
 
     const fetchMessages = async (id, shouldTriggerAI = false) => {
         try {
@@ -54,15 +100,19 @@ function ChatContent() {
                     ...uiMessages
                 ]);
 
-                // Update Brower Tab Title
+                // Update Browser Tab Title
                 if (data.title) {
-                    document.title = `${data.title} | Promptly AI`;
+                    const capitalizedTitle = data.title.charAt(0).toUpperCase() + data.title.slice(1);
+                    document.title = `${capitalizedTitle} | Promptly AI`;
                 }
 
-                // If trigger is true and we only have one user message
-                if (shouldTriggerAI && uiMessages.length === 1 && uiMessages[0].role === 'user') {
+                // If trigger is true, only 1 user msg, and not triggered yet
+                if (shouldTriggerAI && uiMessages.length === 1 && uiMessages[0].role === 'user' && !hasTriggeredRef.current) {
+                    hasTriggeredRef.current = true; // Mark as triggered
                     handleSendMessage(uiMessages[0].text, uiMessages[0].image || null, true);
-                    router.replace(`/c/${id}`);
+
+                    // Replace URL to remove ?trigger=true without refreshing
+                    window.history.replaceState(null, '', `/c/${id}`);
                 }
             } else {
                 router.replace('/');
@@ -76,14 +126,32 @@ function ChatContent() {
     const handleSendMessage = async (text = '', image = null, isAutoTrigger = false) => {
         if (!text?.trim() && !image) return;
 
+        // Reset Stop Ref
+        isStoppedRef.current = false;
+
+        // Setup Abort Controller
+        if (abortControllerRef.current) abortControllerRef.current.abort();
+        abortControllerRef.current = new AbortController();
+
         if (!isAutoTrigger) {
             const userMsg = { id: Date.now(), role: 'user', text, image };
             setMessages(prev => [...prev, userMsg]);
         }
-        setLoading(true);
+
+
+
+
+        let status = "Thinking...";
+        const lowerText = text.toLowerCase();
+        if (image) status = "Analyzing Image...";
+        else if (/(search|news|weather|price|stock|update|latest)/.test(lowerText)) status = "Searching Web...";
+        else if (/(code|bug|error|fix|function|api)/.test(lowerText)) status = "Analyzing Code...";
+        else if (/(resume|cv|ats)/.test(lowerText)) status = "Scanning Resume...";
+
+        setStatusMessage(status);
 
         try {
-            // Save User Message to DB (Only if it's a NEW message from the UI, not an auto-trigger)
+            // Save User Message to DB
             if (chatId && session && !isAutoTrigger) {
                 const saveRes = await fetch(`/api/chats/${chatId}`, {
                     method: 'POST',
@@ -93,9 +161,7 @@ function ChatContent() {
 
                 if (saveRes.ok) {
                     const saveData = await saveRes.json();
-                    if (saveData.updatedTitle) {
-                        document.title = `${saveData.updatedTitle} | Promptly AI`;
-                    }
+                    if (saveData.updatedTitle) document.title = `${saveData.updatedTitle} | Promptly AI`;
                     window.dispatchEvent(new CustomEvent('chatUpdated'));
                 }
             }
@@ -105,46 +171,73 @@ function ChatContent() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: text, history: session ? messages : [], image }),
+                signal: abortControllerRef.current.signal
             });
 
             const data = await response.json();
-            const aiText = data.reply;
+
+            setStatusMessage(null);
+
+
+            const fullText = data.reply;
+            const startTime = Date.now();
+            const typingSpeed = 15;
 
             const aiMsgId = Date.now() + 1;
             setMessages(prev => [...prev, { id: aiMsgId, role: 'ai', text: '' }]);
 
-            let currentText = '';
-            const chunks = aiText.match(/(.|[\r\n]){1,4}/g) || [];
+            while (true) {
+                if (isStoppedRef.current) break;
 
-            for (const chunk of chunks) {
-                currentText += chunk;
+                const now = Date.now();
+                const elapsed = now - startTime;
+
+                // Calculate how many chars should be visible by now
+                const charCount = Math.floor(elapsed / typingSpeed);
+
+                if (charCount >= fullText.length) {
+                    setMessages(prev => prev.map(msg => msg.id === aiMsgId ? { ...msg, text: fullText } : msg));
+                    break;
+                }
+
+                const currentText = fullText.slice(0, charCount);
                 setMessages(prev => prev.map(msg => msg.id === aiMsgId ? { ...msg, text: currentText } : msg));
-                await new Promise(resolve => setTimeout(resolve, 15));
+
+                // Use a short timeout for smooth animation
+                await new Promise(resolve => setTimeout(resolve, 20));
             }
 
-            if (chatId && session) {
+            // Only save if NOT stopped
+            if (chatId && session && !isStoppedRef.current) {
                 try {
                     await fetch(`/api/chats/${chatId}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ role: 'ai', content: aiText }),
+                        body: JSON.stringify({ role: 'ai', content: fullText }), // Save full text
                     });
                 } catch (saveErr) {
                     console.error("Failed to save AI response:", saveErr);
                 }
             }
         } catch (error) {
-            console.error('Error:', error);
-            setMessages(prev => [...prev, { id: Date.now() + 1, role: 'ai', text: `Error: ${error.message || "I encountered an error."}` }]);
+            if (error.name === 'AbortError') {
+                console.log('Fetch aborted');
+                // Don't show error bubble for manual stop
+            } else {
+                console.error('Error:', error);
+                setMessages(prev => [...prev, { id: Date.now() + 1, role: 'ai', text: `Error: ${error.message || "I encountered an error."}` }]);
+            }
         } finally {
-            setLoading(false);
+            setIsGenerating(false);
+            setStatusMessage(null);
+            abortControllerRef.current = null;
         }
     };
 
     return (
         <>
-            <ChatArea messages={messages} loading={loading} scrollRef={scrollRef} />
-            <InputArea onSend={handleSendMessage} loading={loading} />
+            <ChatArea messages={messages} loading={statusMessage} scrollRef={scrollRef} />
+            <InputArea onSend={handleSendMessage} loading={isGenerating} onStop={handleStop} />
         </>
     );
 }

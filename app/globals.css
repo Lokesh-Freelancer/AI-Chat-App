@@ -229,7 +229,7 @@ body {
 }
 
 /* --- Premium Custom Tooltips --- */
-[data-tooltip] {
+[data-tooltip]:not([data-tooltip=""]):not([data-tooltip="null"]) {
   position: relative;
 }
 

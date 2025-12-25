@@ -1,7 +1,7 @@
 'use client';
 
 import { useSession, signOut } from 'next-auth/react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, usePathname } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import ThemeToggle from './ThemeToggle';
@@ -20,9 +20,10 @@ export default function Sidebar() {
     const editInputRef = useRef(null);
     const router = useRouter();
     const params = useParams();
+    const pathname = usePathname();
     const currentChatId = params.chatId;
 
-    // Detect mobile
+
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth <= 767);
         checkMobile();
@@ -30,7 +31,7 @@ export default function Sidebar() {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-    // Load/Save collapsed state
+
     useEffect(() => {
         const saved = localStorage.getItem('sidebar-collapsed');
         if (saved !== null) setIsCollapsed(JSON.parse(saved));
@@ -77,42 +78,29 @@ export default function Sidebar() {
         }
     };
 
-    const handleNewChat = async () => {
+    const handleNewChat = () => {
         if (!session) {
             router.push('/');
             return;
         }
 
-        // Check if an empty "New Chat" already exists
-        const existingEmptyChat = chats.find(c => c.title === "New Chat");
+        // 1. Check if a truly empty "New Chat" exists (0 messages) to reuse it
+        const existingEmptyChat = chats.find(c => c.title === "New Chat" && c._count?.messages === 0);
         if (existingEmptyChat) {
-            router.push(`/c/${existingEmptyChat.id}`);
+            // Only navigate if we're not already on this chat
+            if (pathname !== `/c/${existingEmptyChat.id}`) {
+                router.push(`/c/${existingEmptyChat.id}`);
+            }
+            if (isMobileOpen) setIsMobileOpen(false);
             return;
         }
 
-        if (isCreating) return;
-        setIsCreating(true);
-        try {
-            const res = await fetch('/api/chats', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: '' }), // Empty message for initial creation
-            });
-
-            if (res.ok) {
-                const newChat = await res.json();
-                window.dispatchEvent(new CustomEvent('chatUpdated'));
-                if (isMobileOpen) setIsMobileOpen(false);
-                router.push(`/c/${newChat.id}`);
-            } else {
-                router.push('/');
-            }
-        } catch (err) {
-            console.error("Failed to create instant chat");
+        // 2. If no empty chat, just go to Home Page (Draft Mode)
+        // Only navigate if we're not already on home page
+        if (pathname !== '/') {
             router.push('/');
-        } finally {
-            setIsCreating(false);
         }
+        if (isMobileOpen) setIsMobileOpen(false);
     };
 
     const startEditing = (e, chat) => {
@@ -129,7 +117,7 @@ export default function Sidebar() {
     const saveEditing = async (chatId) => {
         if (!editValue.trim()) return cancelEditing();
 
-        // Optimistic update
+
         setChats(prev => prev.map(c => c.id === chatId ? { ...c, title: editValue } : c));
         setEditingChatId(null);
 
@@ -157,7 +145,7 @@ export default function Sidebar() {
         e.stopPropagation();
         if (!confirm("Are you sure you want to delete this chat?")) return;
 
-        // Optimistic delete
+
         setChats(prev => prev.filter(c => c.id !== chatId));
         if (currentChatId === chatId) {
             router.push('/');
@@ -180,7 +168,7 @@ export default function Sidebar() {
         }
     };
 
-    // Group chats by date
+
     const groupedChats = {
         Today: [],
         Yesterday: [],
@@ -202,7 +190,7 @@ export default function Sidebar() {
         }
     });
 
-    // Actual collapsed state for rendering
+
     const showCollapsed = isCollapsed && !isMobile;
 
     if (status === 'loading') {
@@ -216,7 +204,7 @@ export default function Sidebar() {
 
     return (
         <>
-            {/* Mobile Overlay */}
+
             <div
                 className={`mobile-overlay ${isMobileOpen ? 'active' : ''}`}
                 onClick={() => setIsMobileOpen(false)}
@@ -239,7 +227,7 @@ export default function Sidebar() {
                     zIndex: 100
                 }}
             >
-                {/* Header with Logo and Toggle */}
+
                 <div
                     onMouseEnter={() => setIsHeaderHovered(true)}
                     onMouseLeave={() => setIsHeaderHovered(false)}
@@ -255,7 +243,6 @@ export default function Sidebar() {
                 >
                     {showCollapsed ? (
                         <div style={{ position: 'relative', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {/* Logo - Hide on Hover */}
                             <img
                                 src="/logo.png"
                                 alt="Logo"
@@ -270,7 +257,7 @@ export default function Sidebar() {
                                     position: 'absolute'
                                 }}
                             />
-                            {/* Toggle Icon - Show on Hover */}
+
                             <button
                                 onClick={toggleSidebar}
                                 className="sidebar-toggle"
@@ -322,7 +309,6 @@ export default function Sidebar() {
                             <button
                                 onClick={toggleSidebar}
                                 className="sidebar-toggle"
-                                data-tooltip="Collapse Sidebar"
                                 style={{
                                     background: 'none',
                                     border: 'none',
@@ -334,7 +320,7 @@ export default function Sidebar() {
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     transition: 'background 0.2s, color 0.2s',
-                                    display: isMobile ? 'none' : 'flex' // Hide toggle on mobile
+                                    display: isMobile ? 'none' : 'flex'
                                 }}
                             >
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -356,7 +342,7 @@ export default function Sidebar() {
                 }}>
                     <div
                         onClick={handleNewChat}
-                        data-tooltip={showCollapsed ? "New chat" : ""}
+                        data-tooltip={showCollapsed ? "New chat" : undefined}
                         style={{
                             padding: showCollapsed ? '10px' : '12px 14px',
                             borderRadius: '12px',
@@ -382,7 +368,7 @@ export default function Sidebar() {
                     </div>
                     {!showCollapsed && (
                         <div style={{ marginTop: '12px', width: '100%' }}>
-                            {/* ThemeToggle removed from here */}
+
                         </div>
                     )}
                 </div>
@@ -418,7 +404,7 @@ export default function Sidebar() {
                                             }}
                                             onMouseEnter={() => setHoveredChatId(chat.id)}
                                             onMouseLeave={() => setHoveredChatId(null)}
-                                            data-tooltip={showCollapsed ? chat.title : ""}
+                                            data-tooltip={showCollapsed ? chat.title : undefined}
                                             className="chat-item-hover"
                                             style={{
                                                 padding: showCollapsed ? '10px' : '10px 14px',
@@ -463,7 +449,7 @@ export default function Sidebar() {
                                                 ) : (
                                                     <>
                                                         <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1, paddingRight: '10px' }}>
-                                                            {chat.title}
+                                                            {chat.title.charAt(0).toUpperCase() + chat.title.slice(1)}
                                                         </div>
 
                                                         {(hoveredChatId === chat.id || currentChatId === chat.id) && (
@@ -512,7 +498,7 @@ export default function Sidebar() {
                         gap: showCollapsed ? '15px' : '12px',
                     }}>
                         <div
-                            data-tooltip={showCollapsed ? session.user.name : ""}
+                            data-tooltip={showCollapsed ? session.user.name : undefined}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -540,9 +526,9 @@ export default function Sidebar() {
                             )}
                         </div>
 
-                        {/* Theme Toggle at Bottom */}
+
                         <div style={{ height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <ThemeToggle />
+                            <ThemeToggle showCollapsed={showCollapsed} />
                         </div>
                     </div>
                 )}

@@ -22,6 +22,13 @@ export async function GET(req, { params }) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Smart Expiry: Reset the 30-day timer whenever the chat is opened
+    // This updates 'updatedAt' to NOW()
+    await prisma.chat.update({
+        where: { id: chatId },
+        data: { updatedAt: new Date() }
+    });
+
     const messages = await prisma.message.findMany({
         where: { chatId },
         orderBy: { createdAt: 'asc' },

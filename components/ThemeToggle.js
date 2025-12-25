@@ -3,7 +3,7 @@
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ showCollapsed = false }) {
     const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
 
@@ -16,7 +16,7 @@ export default function ThemeToggle() {
     return (
         <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            data-tooltip={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            data-tooltip={showCollapsed ? `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode` : undefined}
             style={{
                 background: 'none',
                 border: '1px solid var(--border-color)',
