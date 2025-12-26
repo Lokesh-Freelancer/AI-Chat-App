@@ -430,7 +430,7 @@ body {
 
   /* Add padding to chat area to prevent content from going under input */
   .chat-area-container {
-    padding-bottom: 80px !important;
+    padding-bottom: 120px !important;
   }
 
   /* Responsive Headers */
@@ -487,5 +487,60 @@ body {
 
   50% {
     transform: scale(1.1);
+  }
+}
+
+/* --- Settings Page Responsiveness --- */
+.settings-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.settings-header {
+  height: 60px;
+  background-color: var(--bg-color);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+}
+
+.settings-row-content {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .settings-container {
+    padding: 80px 16px 32px 16px !important;
+    /* Extra top padding for mobile header */
+  }
+
+  .settings-header {
+    display: none !important;
+    /* Hide custom header in mobile as we have MobileHeader */
+  }
+
+  .settings-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .settings-row>div:last-child {
+    width: 100%;
+    margin-top: 4px;
   }
 }

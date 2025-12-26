@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 export default function MobileHeader() {
     return (
         <div className="mobile-header">
@@ -15,10 +17,10 @@ export default function MobileHeader() {
                         <line x1="3" y1="18" x2="21" y2="18"></line>
                     </svg>
                 </button>
-                <div className="mobile-header-logo">
+                <Link href="/" className="mobile-header-logo" style={{ textDecoration: 'none' }}>
                     <img src="/logo.png" alt="Logo" style={{ width: '24px', height: '24px', borderRadius: '6px' }} />
                     <span className="mobile-app-name">Promptly AI</span>
-                </div>
+                </Link>
                 <div style={{ width: '44px' }}></div> {/* Spacer for symmetry */}
             </div>
         </div>

@@ -17,7 +17,10 @@ export default function Sidebar() {
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [isHeaderHovered, setIsHeaderHovered] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showProfileMenu, setShowProfileMenu] = useState(false);
     const editInputRef = useRef(null);
+    const searchInputRef = useRef(null);
     const router = useRouter();
     const params = useParams();
     const pathname = usePathname();
@@ -59,6 +62,18 @@ export default function Sidebar() {
             window.removeEventListener('toggleMobileSidebar', handleMobileToggle);
         };
     }, [status]);
+
+    // Keyboard shortcut for search (Ctrl+K / Cmd+K)
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                searchInputRef.current?.focus();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     useEffect(() => {
         if (editingChatId && editInputRef.current) {
@@ -169,13 +184,18 @@ export default function Sidebar() {
     };
 
 
+    // Filter chats based on search query
+    const filteredChats = chats.filter(chat =>
+        chat.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     const groupedChats = {
         Today: [],
         Yesterday: [],
         Older: []
     };
 
-    chats.forEach(chat => {
+    filteredChats.forEach(chat => {
         const date = new Date(chat.updatedAt);
         const today = new Date();
         const yesterday = new Date(today);
@@ -243,20 +263,22 @@ export default function Sidebar() {
                 >
                     {showCollapsed ? (
                         <div style={{ position: 'relative', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <img
-                                src="/logo.png"
-                                alt="Logo"
-                                style={{
-                                    width: '32px',
-                                    height: '32px',
-                                    borderRadius: '8px',
-                                    flexShrink: 0,
-                                    opacity: isHeaderHovered ? 0 : 1,
-                                    visibility: isHeaderHovered ? 'hidden' : 'visible',
-                                    transition: 'opacity 0.2s ease, visibility 0.2s',
-                                    position: 'absolute'
-                                }}
-                            />
+                            <Link href="/" style={{ display: 'contents' }}>
+                                <img
+                                    src="/logo.png"
+                                    alt="Logo"
+                                    style={{
+                                        width: '32px',
+                                        height: '32px',
+                                        borderRadius: '8px',
+                                        flexShrink: 0,
+                                        opacity: isHeaderHovered ? 0 : 1,
+                                        visibility: isHeaderHovered ? 'hidden' : 'visible',
+                                        transition: 'opacity 0.2s ease, visibility 0.2s',
+                                        position: 'absolute'
+                                    }}
+                                />
+                            </Link>
 
                             <button
                                 onClick={toggleSidebar}
@@ -289,7 +311,7 @@ export default function Sidebar() {
                         </div>
                     ) : (
                         <>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                            <Link href="/" onClick={() => setIsMobileOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, textDecoration: 'none', cursor: 'pointer' }}>
                                 <img
                                     src="/logo.png"
                                     alt="Logo"
@@ -304,7 +326,7 @@ export default function Sidebar() {
                                 }}>
                                     Promptly AI
                                 </h1>
-                            </div>
+                            </Link>
 
                             <button
                                 onClick={toggleSidebar}
@@ -327,6 +349,28 @@ export default function Sidebar() {
                                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                                     <line x1="9" y1="3" x2="9" y2="21" />
                                     <path d="M15 15l-3-3 3-3" />
+                                </svg>
+                            </button>
+
+                            {/* Mobile Close Button */}
+                            <button
+                                onClick={() => setIsMobileOpen(false)}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: 'var(--text-secondary)',
+                                    cursor: 'pointer',
+                                    padding: '6px',
+                                    borderRadius: '6px',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'background 0.2s, color 0.2s',
+                                    display: isMobile ? 'flex' : 'none'
+                                }}
+                            >
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
                                 </svg>
                             </button>
                         </>
@@ -366,6 +410,86 @@ export default function Sidebar() {
                         </svg>
                         {!showCollapsed && <span>New chat</span>}
                     </div>
+
+                    {/* Search Input */}
+                    {!showCollapsed && (
+                        <div style={{ marginTop: '12px', width: '100%', position: 'relative' }}>
+                            <div style={{ position: 'relative' }}>
+                                {/* Search Icon */}
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="var(--text-secondary)"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    style={{
+                                        position: 'absolute',
+                                        left: '12px',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        pointerEvents: 'none'
+                                    }}
+                                >
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <path d="m21 21-4.35-4.35"></path>
+                                </svg>
+
+                                <input
+                                    ref={searchInputRef}
+                                    type="text"
+                                    placeholder="Search chats..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 36px 10px 36px',
+                                        borderRadius: '8px',
+                                        border: '1px solid var(--border-color)',
+                                        backgroundColor: 'var(--input-bg)',
+                                        color: 'var(--text-main)',
+                                        fontSize: '0.9rem',
+                                        outline: 'none',
+                                        transition: 'border-color 0.2s'
+                                    }}
+                                    onFocus={(e) => e.target.style.borderColor = 'var(--primary-color)'}
+                                    onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                                />
+
+                                {/* Clear Button */}
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => setSearchQuery('')}
+                                        style={{
+                                            position: 'absolute',
+                                            right: '8px',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            background: 'none',
+                                            border: 'none',
+                                            color: 'var(--text-secondary)',
+                                            cursor: 'pointer',
+                                            padding: '4px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            borderRadius: '4px',
+                                            transition: 'background 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-color)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                                    >
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
                     {!showCollapsed && (
                         <div style={{ marginTop: '12px', width: '100%' }}>
 
@@ -381,6 +505,33 @@ export default function Sidebar() {
                                 <Link href="/login" style={{ color: 'var(--primary-color)', textDecoration: 'none' }}>Login</Link>
                             </div>
                         )
+                    ) : filteredChats.length === 0 && searchQuery ? (
+                        // Empty state when search has no results
+                        <div style={{
+                            padding: '40px 20px',
+                            textAlign: 'center',
+                            color: 'var(--text-secondary)'
+                        }}>
+                            <svg
+                                width="48"
+                                height="48"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                style={{
+                                    margin: '0 auto 16px',
+                                    opacity: 0.5
+                                }}
+                            >
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.35-4.35"></path>
+                            </svg>
+                            <p style={{ fontSize: '0.9rem', marginBottom: '8px' }}>No chats found</p>
+                            <p style={{ fontSize: '0.8rem', opacity: 0.7 }}>Try a different search term</p>
+                        </div>
                     ) : (
                         Object.entries(groupedChats).map(([label, list]) => (
                             list.length > 0 && (
@@ -497,39 +648,77 @@ export default function Sidebar() {
                         padding: '15px 10px',
                         gap: showCollapsed ? '15px' : '12px',
                     }}>
-                        <div
-                            data-tooltip={showCollapsed ? session.user.name : undefined}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: showCollapsed ? 'center' : 'flex-start',
-                                gap: '12px',
-                                flex: 1,
-                                minWidth: 0
-                            }}
-                        >
-                            {session.user.image ? (
-                                <img src={session.user.image} alt="Avatar" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-                            ) : (
-                                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', flexShrink: 0 }}>
-                                    {session.user.name?.[0]?.toUpperCase() || 'U'}
-                                </div>
-                            )}
-                            {!showCollapsed && (
-                                <div style={{ flex: 1, overflow: 'hidden' }}>
-                                    <div style={{ color: 'var(--text-main)', fontSize: '0.9rem', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.user.name}</div>
-                                    <div style={{ display: 'flex', gap: '10px', marginTop: '2px' }}>
-                                        <Link href={`/profile?chatId=${currentChatId || ''}`} style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', textDecoration: 'none' }} className="hover-link">Profile</Link>
-                                        <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', cursor: 'pointer' }} className="hover-link" onClick={() => signOut()}>Logout</span>
+
+                        <div style={{ position: 'relative', flex: 1 }}>
+                            <div
+                                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                                data-tooltip={showCollapsed ? session.user.name : undefined}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: showCollapsed ? 'center' : 'flex-start',
+                                    gap: '12px',
+                                    padding: '8px',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    transition: 'background 0.2s',
+                                    minWidth: 0
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--surface-color)'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >
+                                {session.user.image ? (
+                                    <img src={session.user.image} alt="Avatar" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', objectPosition: 'top', flexShrink: 0 }} />
+                                ) : (
+                                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', flexShrink: 0 }}>
+                                        {session.user.name?.[0]?.toUpperCase() || 'U'}
                                     </div>
-                                </div>
+                                )}
+                                {!showCollapsed && (
+                                    <div style={{ flex: 1, overflow: 'hidden' }}>
+                                        <div style={{ color: 'var(--text-main)', fontSize: '0.9rem', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.user.name}</div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Profile Popup Menu */}
+                            {showProfileMenu && (
+                                <>
+                                    <div onClick={() => setShowProfileMenu(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }} />
+                                    <div style={{ position: 'absolute', bottom: '100%', left: showCollapsed ? '0' : '10px', transform: 'none', marginBottom: '10px', width: showCollapsed ? '280px' : 'calc(100% - 20px)', backgroundColor: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '12px', boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)', zIndex: 1000, overflow: 'hidden' }}>
+                                        <div style={{ padding: '16px', borderBottom: '1px solid var(--border-color)' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                {session.user.image ? (
+                                                    <img src={session.user.image} alt="Avatar" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', objectPosition: 'top' }} />
+                                                ) : (
+                                                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                                                        {session.user.name?.[0]?.toUpperCase() || 'U'}
+                                                    </div>
+                                                )}
+                                                <div style={{ flex: 1, overflow: 'hidden' }}>
+                                                    <div style={{ color: 'var(--text-main)', fontSize: '0.95rem', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.user.name}</div>
+                                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.user.email}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div style={{ padding: '8px' }}>
+                                            <Link href="/settings" onClick={() => { setShowProfileMenu(false); setIsMobileOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '8px', color: 'var(--text-main)', textDecoration: 'none', fontSize: '0.9rem', transition: 'background 0.2s', cursor: 'pointer' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--input-bg)'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                                                    <circle cx="12" cy="12" r="3"></circle>
+                                                </svg>
+                                                Settings
+                                            </Link>
+                                            <div onClick={() => { setShowProfileMenu(false); signOut(); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '8px', color: 'var(--text-main)', fontSize: '0.9rem', transition: 'background 0.2s', cursor: 'pointer' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--input-bg)'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                                                Log out
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
                             )}
                         </div>
 
-
-                        <div style={{ height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <ThemeToggle showCollapsed={showCollapsed} />
-                        </div>
                     </div>
                 )}
             </aside>
