@@ -13,8 +13,13 @@ export default function ChatArea({ messages, loading, scrollRef }) {
             }}
         >
             <div style={{ maxWidth: '800px', width: '100%', margin: '0 auto' }}>
-                {messages.map((msg) => (
-                    <MessageBubble key={msg.id} message={msg} />
+                {messages.map((msg, index) => (
+                    <MessageBubble
+                        key={msg.id}
+                        message={msg}
+                        isLast={index === messages.length - 1}
+                        loading={loading}
+                    />
                 ))}
 
                 {loading && (

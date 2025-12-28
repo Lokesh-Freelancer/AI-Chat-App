@@ -4,7 +4,7 @@ import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import remarkGfm from 'remark-gfm';
 import { useState } from 'react';
 
-export default function MessageBubble({ message }) {
+export default function MessageBubble({ message, isLast, loading }) {
     const isUser = message.role === 'user';
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [isSupported, setIsSupported] = useState(false);
@@ -123,6 +123,11 @@ export default function MessageBubble({ message }) {
         );
     };
 
+    // Determine if we should show the speaker icon
+    // Hide if it's the last message AND loading is true (currently generating)
+    const isTyping = isLast && loading;
+    const showSpeaker = !isUser && isSupported && message.text && !isTyping;
+
     return (
         <div style={{
             display: 'flex',
@@ -147,7 +152,7 @@ export default function MessageBubble({ message }) {
                 position: 'relative'
             }}>
                 {/* Speaker button for AI messages */}
-                {!isUser && isSupported && message.text && (
+                {showSpeaker && (
                     <button
                         onClick={speakMessage}
                         className={isSpeaking ? 'speaker-active' : ''}
@@ -260,6 +265,8 @@ export default function MessageBubble({ message }) {
                         )}
                     </div>
                 )}
+
+                {/* Content */}
                 {isUser ? (
                     <div style={{ whiteSpace: 'pre-wrap' }}>{message.text}</div>
                 ) : (
@@ -273,6 +280,45 @@ export default function MessageBubble({ message }) {
                             {message.text}
                         </ReactMarkdown>
                     </div>
+                )}
+
+                {/* Speaker button for AI messages */}
+                {showSpeaker && (
+                    <button
+                        onClick={speakMessage}
+                        className={isSpeaking ? 'speaker-active' : ''}
+                        style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            background: 'var(--surface-color)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '6px',
+                            padding: '6px',
+                            cursor: 'pointer',
+                            color: isSpeaking ? 'var(--primary-color)' : 'var(--text-secondary)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s',
+                            zIndex: 10
+                        }}
+                        onMouseEnter={(e) => !isSpeaking && (e.currentTarget.style.color = 'var(--text-main)')}
+                        onMouseLeave={(e) => !isSpeaking && (e.currentTarget.style.color = 'var(--text-secondary)')}
+                        title={isSpeaking ? 'Stop speaking' : 'Read aloud'}
+                    >
+                        {isSpeaking ? (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="6" y="4" width="4" height="16"></rect>
+                                <rect x="14" y="4" width="4" height="16"></rect>
+                            </svg>
+                        ) : (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                            </svg>
+                        )}
+                    </button>
                 )}
             </div>
         </div>
