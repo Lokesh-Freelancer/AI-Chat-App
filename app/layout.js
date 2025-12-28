@@ -53,6 +53,8 @@ import Providers from '@/components/Providers';
 import Sidebar from '@/components/Sidebar';
 import MobileHeader from '@/components/MobileHeader';
 
+import GuestHeader from '@/components/GuestHeader';
+
 import { Toaster } from 'sonner';
 
 export default function RootLayout({ children }) {
@@ -64,6 +66,7 @@ export default function RootLayout({ children }) {
             <Toaster position="top-center" richColors theme="system" />
             <Sidebar />
             <main style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
+              <GuestHeader />
               <MobileHeader />
               {children}
             </main>

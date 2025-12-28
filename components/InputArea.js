@@ -1,13 +1,33 @@
+'use client';
+
 import { useState, useRef, useEffect } from 'react';
+import EmojiPicker from 'emoji-picker-react';
+import { useTheme } from 'next-themes';
 
 export default function InputArea({ onSend, loading, onStop }) {
     const [input, setInput] = useState('');
     const [image, setImage] = useState(null); // { name, base64 }
     const [isRecording, setIsRecording] = useState(false);
     const [isSupported, setIsSupported] = useState(false);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const fileInputRef = useRef(null);
     const recognitionRef = useRef(null);
+    const textareaRef = useRef(null);
+    const emojiPickerRef = useRef(null);
+    const { theme } = useTheme();
 
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+                setShowEmojiPicker(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     useEffect(() => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -22,39 +42,39 @@ export default function InputArea({ onSend, loading, onStop }) {
 
             recognitionRef.current.onstart = () => {
                 console.log('🎤 Recording started');
+                setIsRecording(true);
             };
 
             recognitionRef.current.onresult = (event) => {
-                console.log('📝 Speech recognition result:', event);
-                const transcript = Array.from(event.results)
-                    .map(result => result[0])
-                    .map(result => result.transcript)
-                    .join('');
-                console.log('✅ Transcribed text:', transcript);
-                setInput(transcript);
+                let interimTranscript = '';
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                    } else {
+                        interimTranscript += event.results[i][0].transcript;
+                    }
+                }
+
+                if (finalTranscript || interimTranscript) {
+                    setInput(prev => {
+                        if (finalTranscript && prev.trim().endsWith(finalTranscript.trim())) {
+                            return prev + interimTranscript;
+                        }
+                        return prev + finalTranscript + interimTranscript;
+                    });
+                }
             };
 
             recognitionRef.current.onerror = (event) => {
                 console.error('❌ Speech recognition error:', event.error);
-                console.error('Error details:', event);
-
-                // Don't stop recording on no-speech error, just log it
                 if (event.error === 'no-speech') {
-                    console.warn('⚠️ No speech detected yet, keep speaking...');
-                    return; // Don't stop recording or show alert
+                    return;
                 }
-
                 setIsRecording(false);
-
-                // User-friendly error messages for critical errors only
                 if (event.error === 'not-allowed') {
-                    alert('Microphone access denied. Please allow microphone permission in your browser settings.');
-                } else if (event.error === 'network') {
-                    alert('Network error. Speech recognition requires internet connection.');
-                } else if (event.error === 'aborted') {
-                    console.log('Recording was aborted');
-                } else {
-                    alert(`Speech recognition error: ${event.error}`);
+                    alert('Microphone access denied.');
                 }
             };
 
@@ -102,6 +122,7 @@ export default function InputArea({ onSend, loading, onStop }) {
         onSend(input, image?.base64);
         setInput('');
         setImage(null);
+        setShowEmojiPicker(false);
     };
 
     const handleKeyDown = (e) => {
@@ -136,9 +157,44 @@ export default function InputArea({ onSend, loading, onStop }) {
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
+    const insertText = (before, after = '') => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = input.substring(start, end);
+        const newText = input.substring(0, start) + before + selectedText + after + input.substring(end);
+
+        setInput(newText);
+
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + before.length, end + before.length);
+        }, 0);
+    };
+
+    const onEmojiClick = (emojiData, event) => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const newText = input.substring(0, start) + emojiData.emoji + input.substring(end);
+
+        setInput(newText);
+        // setShowEmojiPicker(false); // Optional: keep open for multiple emojis
+
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + emojiData.emoji.length, start + emojiData.emoji.length);
+        }, 0);
+    };
+
     return (
         <div className="input-area-container" style={{
             padding: '20px',
+            marginTop: '20px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -152,6 +208,20 @@ export default function InputArea({ onSend, loading, onStop }) {
                 flexDirection: 'column',
                 gap: '10px'
             }}>
+
+                {/* Emoji Picker */}
+                {showEmojiPicker && (
+                    <div ref={emojiPickerRef} style={{ position: 'absolute', bottom: '100%', left: 0, marginBottom: '10px', zIndex: 100 }}>
+                        <EmojiPicker
+                            onEmojiClick={onEmojiClick}
+                            theme={theme === 'dark' ? 'dark' : 'light'}
+                            searchDisabled={false}
+                            skinTonesDisabled
+                            width={320}
+                            height={400}
+                        />
+                    </div>
+                )}
 
                 {image && (
                     <div style={{
@@ -226,6 +296,25 @@ export default function InputArea({ onSend, loading, onStop }) {
                     </div>
                 )}
 
+                {/* Formatting Toolbar */}
+                <div style={{
+                    display: 'flex',
+                    gap: '4px',
+                    padding: '0 8px',
+                    opacity: input.trim() || showEmojiPicker ? 1 : 0.7,
+                    transition: 'opacity 0.2s'
+                }}>
+                    <button onClick={() => insertText('**', '**')} title="Bold" style={toolbarBtnStyle}>
+                        <strong style={{ fontFamily: 'serif' }}>B</strong>
+                    </button>
+                    <button onClick={() => insertText('*', '*')} title="Italic" style={toolbarBtnStyle}>
+                        <em style={{ fontFamily: 'serif' }}>I</em>
+                    </button>
+                    <button onClick={() => insertText('~~', '~~')} title="Strikethrough" style={toolbarBtnStyle}>
+                        <span style={{ textDecoration: 'line-through' }}>S</span>
+                    </button>
+                </div>
+
                 <div style={{
                     backgroundColor: 'var(--input-bg)',
                     borderRadius: '24px',
@@ -257,9 +346,35 @@ export default function InputArea({ onSend, loading, onStop }) {
                         }}
                         onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
                         onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+                        title="Upload Image/PDF"
                     >
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                        </svg>
+                    </button>
+
+                    <button
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            padding: '8px',
+                            cursor: 'pointer',
+                            color: showEmojiPicker ? 'var(--primary-color)' : 'var(--text-secondary)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'color 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
+                        onMouseLeave={(e) => !showEmojiPicker && (e.currentTarget.style.color = 'var(--text-secondary)')}
+                        title="Emojis"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                            <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                            <line x1="15" y1="9" x2="15.01" y2="9"></line>
                         </svg>
                     </button>
 
@@ -293,6 +408,7 @@ export default function InputArea({ onSend, loading, onStop }) {
                     )}
 
                     <textarea
+                        ref={textareaRef}
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
@@ -308,6 +424,7 @@ export default function InputArea({ onSend, loading, onStop }) {
                             maxHeight: '200px',
                             fontSize: '1rem',
                             fontFamily: 'inherit',
+                            marginLeft: '4px'
                         }}
                         rows={1}
                     />
@@ -330,10 +447,8 @@ export default function InputArea({ onSend, loading, onStop }) {
                         }}
                     >
                         {loading ? (
-
                             <div style={{ width: '10px', height: '10px', backgroundColor: 'var(--text-main)', borderRadius: '2px' }}></div>
                         ) : (
-
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z" fill="#ffffff" />
                             </svg>
@@ -344,3 +459,17 @@ export default function InputArea({ onSend, loading, onStop }) {
         </div>
     );
 }
+
+const toolbarBtnStyle = {
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--text-secondary)',
+    cursor: 'pointer',
+    padding: '4px 6px',
+    borderRadius: '4px',
+    fontSize: '0.9rem',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s'
+};

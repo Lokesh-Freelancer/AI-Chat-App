@@ -19,16 +19,19 @@ function ChatContent() {
     const getGreeting = () => {
         const name = session?.user?.name || 'there';
         const isGuest = !session?.user?.name;
+        const email = session?.user?.email;
 
-        const lastVisit = localStorage.getItem('lastVisit');
+        // Use user-specific key for last visit
+        const storageKey = email ? `lastVisit_${email}` : 'lastVisit_guest';
+        const lastVisit = localStorage.getItem(storageKey);
         const now = Date.now();
 
-        // Guest user ke liye simple greeting
+        // Simple greeting for guest users
         if (isGuest) {
             return "Hi there! How can I help you today?";
         }
 
-        // Logged-in user ke liye personalized greeting
+        // Personalized greeting for logged-in users
         if (!lastVisit) {
             return `Welcome ${name}! 👋 I'm here to help you with anything.`;
         }
@@ -51,9 +54,12 @@ function ChatContent() {
         // Auto-Cleanup Trigger
         fetch('/api/cron/cleanup').catch(err => console.error("Cleanup trigger failed", err));
 
-        // Save current visit time for next session
-        if (session?.user) {
-            localStorage.setItem('lastVisit', Date.now().toString());
+        // Save current visit time for next session with user-specific key
+        if (session?.user?.email) {
+            const storageKey = `lastVisit_${session.user.email}`;
+            localStorage.setItem(storageKey, Date.now().toString());
+        } else if (!session?.user) {
+            localStorage.setItem('lastVisit_guest', Date.now().toString());
         }
     }, [session?.user]);
 
@@ -135,9 +141,6 @@ function ChatContent() {
         setIsSending(true);
 
         setMessages(prev => [...prev, { id: 'initial', role: 'user', text, image }]);
-
-
-        setIsGenerating(true);
 
 
         let status = "Thinking...";

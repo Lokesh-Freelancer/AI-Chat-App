@@ -3,16 +3,22 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { signIn } from 'next-auth/react';
+import { toast } from 'sonner';
 
 export default function SignupPage() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const router = useRouter();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
+        setError('');
+
         try {
             const res = await fetch('/api/auth/signup', {
                 method: 'POST',
@@ -20,14 +26,34 @@ export default function SignupPage() {
                 body: JSON.stringify({ name, email, password }),
             });
 
+            const data = await res.json();
+
             if (res.ok) {
-                router.push('/login');
+                toast.success('Registration complete! Logging you in...');
+
+                // Auto-login
+                const result = await signIn('credentials', {
+                    redirect: false,
+                    email,
+                    password,
+                });
+
+                if (result?.error) {
+                    toast.error('Auto-login failed. Please log in manually.');
+                    router.push('/login');
+                } else {
+                    toast.success('Welcome to Promptly AI!');
+                    router.push('/');
+                }
             } else {
-                const data = await res.json();
                 setError(data.error);
+                toast.error(data.error || 'Registration failed');
             }
         } catch (err) {
             setError('Something went wrong');
+            toast.error('Something went wrong');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -102,6 +128,7 @@ export default function SignupPage() {
                     />
                     <button
                         type="submit"
+                        disabled={loading}
                         style={{
                             padding: '0.8rem',
                             borderRadius: '0.5rem',
@@ -109,11 +136,12 @@ export default function SignupPage() {
                             backgroundColor: 'var(--primary-color)',
                             color: '#131314',
                             fontWeight: 'bold',
-                            cursor: 'pointer',
+                            cursor: loading ? 'not-allowed' : 'pointer',
                             fontSize: '1rem',
+                            opacity: loading ? 0.7 : 1,
                         }}
                     >
-                        Sign Up
+                        {loading ? 'Creating Account...' : 'Sign Up'}
                     </button>
                 </form>
                 <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>

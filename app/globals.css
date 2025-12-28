@@ -11,7 +11,7 @@
   --user-msg-bg: #2d2e2f;
   --ai-msg-bg: transparent;
 
-  /* No need for --font-sans here anymore as we use next/font */
+
 }
 
 [data-theme='light'] {
@@ -33,7 +33,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  /* Ultimate Sharpness */
+
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -291,7 +291,7 @@ body {
   right: 0;
   height: 60px;
   background: rgba(19, 19, 20, 0.7);
-  /* Match --bg-color but transparent */
+
   backdrop-filter: blur(12px) saturate(160%);
   -webkit-backdrop-filter: blur(12px) saturate(160%);
   border-bottom: 1px solid var(--border-color);
@@ -355,7 +355,6 @@ body {
     top: 0;
     bottom: 0;
     z-index: 2000 !important;
-    /* Increased to be above header/overlay */
     width: 280px !important;
     transform: translateX(-100%) !important;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -375,7 +374,6 @@ body {
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(2px);
     z-index: 1500;
-    /* Between header and sidebar */
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
@@ -388,7 +386,6 @@ body {
 
   .chat-area-container {
     padding-top: 60px !important;
-    /* Mobile Header is 60px */
     padding-bottom: 20px !important;
   }
 
@@ -397,7 +394,7 @@ body {
     padding: 24px !important;
   }
 
-  /* User requested specific padding */
+
   .chat-area-container>div div {
     padding: 0 !important;
   }
@@ -525,12 +522,11 @@ body {
 @media (max-width: 768px) {
   .settings-container {
     padding: 80px 16px 32px 16px !important;
-    /* Extra top padding for mobile header */
   }
 
   .settings-header {
     display: none !important;
-    /* Hide custom header in mobile as we have MobileHeader */
+    display: none !important;
   }
 
   .settings-row {

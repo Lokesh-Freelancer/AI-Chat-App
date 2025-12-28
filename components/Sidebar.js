@@ -34,7 +34,6 @@ export default function Sidebar() {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-
     useEffect(() => {
         const saved = localStorage.getItem('sidebar-collapsed');
         if (saved !== null) setIsCollapsed(JSON.parse(saved));
@@ -222,6 +221,10 @@ export default function Sidebar() {
         );
     }
 
+    if (status === 'unauthenticated') {
+        return null;
+    }
+
     return (
         <>
 
@@ -384,116 +387,115 @@ export default function Sidebar() {
                     marginBottom: '20px',
                     padding: '0 5px'
                 }}>
-                    <div
-                        onClick={handleNewChat}
-                        data-tooltip={showCollapsed ? "New chat" : undefined}
-                        style={{
-                            padding: showCollapsed ? '10px' : '12px 14px',
-                            borderRadius: '12px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: showCollapsed ? 'center' : 'flex-start',
-                            gap: '12px',
-                            color: 'var(--text-main)',
-                            fontSize: '0.95rem',
-                            fontWeight: '500',
-                            width: showCollapsed ? '44px' : '100%',
-                            height: showCollapsed ? '44px' : 'auto',
-                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                        }}
-                        className="new-chat-btn-hover"
-                    >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                        {!showCollapsed && <span>New chat</span>}
-                    </div>
-
-                    {/* Search Input */}
-                    {!showCollapsed && (
-                        <div style={{ marginTop: '12px', width: '100%', position: 'relative' }}>
-                            <div style={{ position: 'relative' }}>
-                                {/* Search Icon */}
-                                <svg
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="var(--text-secondary)"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    style={{
-                                        position: 'absolute',
-                                        left: '12px',
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                        pointerEvents: 'none'
-                                    }}
-                                >
-                                    <circle cx="11" cy="11" r="8"></circle>
-                                    <path d="m21 21-4.35-4.35"></path>
+                    {session && (
+                        <>
+                            <div
+                                onClick={handleNewChat}
+                                data-tooltip={showCollapsed ? "New chat" : undefined}
+                                style={{
+                                    padding: showCollapsed ? '10px' : '12px 14px',
+                                    borderRadius: '12px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: showCollapsed ? 'center' : 'flex-start',
+                                    gap: '12px',
+                                    color: 'var(--text-main)',
+                                    fontSize: '0.95rem',
+                                    fontWeight: '500',
+                                    width: showCollapsed ? '44px' : '100%',
+                                    height: showCollapsed ? '44px' : 'auto',
+                                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                }}
+                                className="new-chat-btn-hover"
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                 </svg>
-
-                                <input
-                                    ref={searchInputRef}
-                                    type="text"
-                                    placeholder="Search chats..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px 36px 10px 36px',
-                                        borderRadius: '8px',
-                                        border: '1px solid var(--border-color)',
-                                        backgroundColor: 'var(--input-bg)',
-                                        color: 'var(--text-main)',
-                                        fontSize: '0.9rem',
-                                        outline: 'none',
-                                        transition: 'border-color 0.2s'
-                                    }}
-                                    onFocus={(e) => e.target.style.borderColor = 'var(--primary-color)'}
-                                    onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
-                                />
-
-                                {/* Clear Button */}
-                                {searchQuery && (
-                                    <button
-                                        onClick={() => setSearchQuery('')}
-                                        style={{
-                                            position: 'absolute',
-                                            right: '8px',
-                                            top: '50%',
-                                            transform: 'translateY(-50%)',
-                                            background: 'none',
-                                            border: 'none',
-                                            color: 'var(--text-secondary)',
-                                            cursor: 'pointer',
-                                            padding: '4px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            borderRadius: '4px',
-                                            transition: 'background 0.2s'
-                                        }}
-                                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-color)'}
-                                        onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
-                                    >
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                                        </svg>
-                                    </button>
-                                )}
+                                {!showCollapsed && <span>New chat</span>}
                             </div>
-                        </div>
-                    )}
-                    {!showCollapsed && (
-                        <div style={{ marginTop: '12px', width: '100%' }}>
 
-                        </div>
+                            {/* Search Input */}
+                            {!showCollapsed && (
+                                <div style={{ marginTop: '12px', width: '100%', position: 'relative' }}>
+                                    <div style={{ position: 'relative' }}>
+                                        {/* Search Icon */}
+                                        <svg
+                                            width="16"
+                                            height="16"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="var(--text-secondary)"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            style={{
+                                                position: 'absolute',
+                                                left: '12px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                pointerEvents: 'none'
+                                            }}
+                                        >
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <path d="m21 21-4.35-4.35"></path>
+                                        </svg>
+
+                                        <input
+                                            ref={searchInputRef}
+                                            type="text"
+                                            placeholder="Search chats..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            style={{
+                                                width: '100%',
+                                                padding: '10px 36px 10px 36px',
+                                                borderRadius: '8px',
+                                                border: '1px solid var(--border-color)',
+                                                backgroundColor: 'var(--input-bg)',
+                                                color: 'var(--text-main)',
+                                                fontSize: '0.9rem',
+                                                outline: 'none',
+                                                transition: 'border-color 0.2s'
+                                            }}
+                                            onFocus={(e) => e.target.style.borderColor = 'var(--primary-color)'}
+                                            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                                        />
+
+                                        {/* Clear Button */}
+                                        {searchQuery && (
+                                            <button
+                                                onClick={() => setSearchQuery('')}
+                                                style={{
+                                                    position: 'absolute',
+                                                    right: '8px',
+                                                    top: '50%',
+                                                    transform: 'translateY(-50%)',
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    color: 'var(--text-secondary)',
+                                                    cursor: 'pointer',
+                                                    padding: '4px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    borderRadius: '4px',
+                                                    transition: 'background 0.2s'
+                                                }}
+                                                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-color)'}
+                                                onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                                            >
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                                </svg>
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
 

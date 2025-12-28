@@ -25,8 +25,11 @@ function ChatContent() {
     const getGreeting = () => {
         const name = session?.user?.name || 'there';
         const isGuest = !session?.user?.name;
+        const email = session?.user?.email;
 
-        const lastVisit = localStorage.getItem('lastVisit');
+        // Use user-specific key for last visit
+        const storageKey = email ? `lastVisit_${email}` : 'lastVisit_guest';
+        const lastVisit = localStorage.getItem(storageKey);
         const now = Date.now();
 
         // Guest user ke liye simple greeting
