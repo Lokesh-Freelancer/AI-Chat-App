@@ -157,22 +157,7 @@ export default function InputArea({ onSend, loading, onStop }) {
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    const insertText = (before, after = '') => {
-        const textarea = textareaRef.current;
-        if (!textarea) return;
 
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const selectedText = input.substring(start, end);
-        const newText = input.substring(0, start) + before + selectedText + after + input.substring(end);
-
-        setInput(newText);
-
-        setTimeout(() => {
-            textarea.focus();
-            textarea.setSelectionRange(start + before.length, end + before.length);
-        }, 0);
-    };
 
     const onEmojiClick = (emojiData, event) => {
         const textarea = textareaRef.current;
@@ -296,24 +281,7 @@ export default function InputArea({ onSend, loading, onStop }) {
                     </div>
                 )}
 
-                {/* Formatting Toolbar */}
-                <div style={{
-                    display: 'flex',
-                    gap: '4px',
-                    padding: '0 8px',
-                    opacity: input.trim() || showEmojiPicker ? 1 : 0.7,
-                    transition: 'opacity 0.2s'
-                }}>
-                    <button onClick={() => insertText('**', '**')} title="Bold" style={toolbarBtnStyle}>
-                        <strong style={{ fontFamily: 'serif' }}>B</strong>
-                    </button>
-                    <button onClick={() => insertText('*', '*')} title="Italic" style={toolbarBtnStyle}>
-                        <em style={{ fontFamily: 'serif' }}>I</em>
-                    </button>
-                    <button onClick={() => insertText('~~', '~~')} title="Strikethrough" style={toolbarBtnStyle}>
-                        <span style={{ textDecoration: 'line-through' }}>S</span>
-                    </button>
-                </div>
+
 
                 <div style={{
                     backgroundColor: 'var(--input-bg)',
@@ -460,16 +428,4 @@ export default function InputArea({ onSend, loading, onStop }) {
     );
 }
 
-const toolbarBtnStyle = {
-    background: 'transparent',
-    border: 'none',
-    color: 'var(--text-secondary)',
-    cursor: 'pointer',
-    padding: '4px 6px',
-    borderRadius: '4px',
-    fontSize: '0.9rem',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'all 0.2s'
-};
+
