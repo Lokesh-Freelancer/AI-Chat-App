@@ -340,7 +340,7 @@ body {
 }
 
 /* --- Mobile Responsiveness --- */
-@media (max-width: 767px) {
+@media (max-width: 1024px) {
   .mobile-header {
     display: block;
   }
@@ -519,7 +519,7 @@ body {
   flex-direction: column;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .settings-container {
     padding: 80px 16px 32px 16px !important;
   }
