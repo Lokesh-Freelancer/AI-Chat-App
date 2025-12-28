@@ -134,7 +134,7 @@ export default function SignupPage() {
                             borderRadius: '0.5rem',
                             border: 'none',
                             backgroundColor: 'var(--primary-color)',
-                            color: '#131314',
+                            color: '#fff',
                             fontWeight: 'bold',
                             cursor: loading ? 'not-allowed' : 'pointer',
                             fontSize: '1rem',

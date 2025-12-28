@@ -21,6 +21,7 @@ export default function LoginPage() {
             });
 
             if (res.error) {
+                toast.error('Invalid credentials');
                 setError('Invalid credentials');
                 return;
             }
@@ -92,7 +93,7 @@ export default function LoginPage() {
                             borderRadius: '0.5rem',
                             border: 'none',
                             backgroundColor: 'var(--primary-color)',
-                            color: '#131314',
+                            color: '#fff',
                             fontWeight: 'bold',
                             cursor: 'pointer',
                             fontSize: '1rem',
