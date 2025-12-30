@@ -25,6 +25,15 @@ export async function GET(req) {
         });
     } catch (error) {
         console.error("Cleanup Error:", error);
+
+        // Handle specific Prisma connection errors
+        if (error.code === 'P1001') {
+            return NextResponse.json({
+                error: "Database connection failed. Please check your internet connection and database configuration.",
+                details: error.message
+            }, { status: 503 }); // Service Unavailable
+        }
+
         return NextResponse.json({ error: "Failed to cleanup chats" }, { status: 500 });
     }
 }

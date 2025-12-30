@@ -357,7 +357,8 @@ export default function MessageBubble({ message, isLast, loading }) {
                 borderTopRightRadius: isUser ? '4px' : '18px',
                 borderTopLeftRadius: isUser ? '18px' : '4px',
                 overflowWrap: 'break-word',
-                position: 'relative'
+                position: 'relative',
+                justifyContent: 'space-between'
             }}>
                 {message.image && typeof message.image === 'string' && (
                     <div style={{ marginBottom: '12px' }}>

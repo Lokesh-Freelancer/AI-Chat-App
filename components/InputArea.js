@@ -187,12 +187,13 @@ export default function InputArea({ onSend, loading, onStop }) {
 
     return (
         <div className="input-area-container" style={{
-            padding: '20px',
-            marginTop: '20px',
+            padding: '16px', // Reduced padding for cleaner look
+            marginBottom: '0', // Ensure it sits at bottom
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            background: 'linear-gradient(to top, var(--bg-color) 80%, transparent)',
+            background: 'var(--bg-color)', // Solid bg typically better for input area
+            borderTop: '1px solid var(--border-color)', // Separator line
         }}>
             <div className="input-container-inner" style={{
                 maxWidth: '800px',
@@ -217,6 +218,7 @@ export default function InputArea({ onSend, loading, onStop }) {
                     </div>
                 )}
 
+                {/* Preview Area */}
                 {image && (
                     <div style={{
                         width: 'fit-content',
@@ -229,7 +231,8 @@ export default function InputArea({ onSend, loading, onStop }) {
                         display: 'flex',
                         alignItems: 'center',
                         gap: '10px',
-                        minWidth: image.type === 'application/pdf' ? '200px' : 'auto'
+                        minWidth: image.type === 'application/pdf' ? '200px' : 'auto',
+                        marginBottom: '4px'
                     }}>
                         {image.type === 'application/pdf' ? (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
@@ -291,14 +294,15 @@ export default function InputArea({ onSend, loading, onStop }) {
                 )}
 
 
-
                 <div style={{
                     backgroundColor: 'var(--input-bg)',
                     borderRadius: '24px',
                     border: '1px solid var(--border-color)',
-                    padding: '10px 16px',
+                    padding: '8px 10px',
                     display: 'flex',
-                    alignItems: 'center',
+                    alignItems: 'flex-end',
+                    width: '100%',
+                    boxSizing: 'border-box'
                 }}>
                     <input
                         type="file"
@@ -308,52 +312,84 @@ export default function InputArea({ onSend, loading, onStop }) {
                         style={{ display: 'none' }}
                     />
 
+                    {/* Integrated Attachment Button */}
                     <button
                         onClick={() => fileInputRef.current?.click()}
                         style={{
                             background: 'none',
                             border: 'none',
-                            padding: '8px',
+                            padding: '6px 0px',
                             cursor: 'pointer',
                             color: 'var(--text-secondary)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            transition: 'color 0.2s'
+                            transition: 'color 0.2s',
+                            marginRight: '2px', // Reduced margin
+                            marginBottom: '4px' // Align with text
                         }}
                         onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
                         onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
                         title="Upload Image/PDF"
                     >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
                         </svg>
                     </button>
+
 
                     <button
                         onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                         style={{
                             background: 'none',
                             border: 'none',
-                            padding: '8px',
+                            padding: '6px',
                             cursor: 'pointer',
                             color: showEmojiPicker ? 'var(--primary-color)' : 'var(--text-secondary)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            transition: 'color 0.2s'
+                            transition: 'color 0.2s',
+                            marginRight: '2px', // Reduced margin
+                            marginBottom: '4px'
                         }}
                         onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-main)'}
                         onMouseLeave={(e) => !showEmojiPicker && (e.currentTarget.style.color = 'var(--text-secondary)')}
                         title="Emojis"
                     >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
                             <line x1="9" y1="9" x2="9.01" y2="9"></line>
                             <line x1="15" y1="9" x2="15.01" y2="9"></line>
                         </svg>
                     </button>
+
+                    <textarea
+                        ref={textareaRef}
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Ask anything..."
+                        style={{
+                            flex: 1,
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            color: 'var(--text-main)',
+                            outline: 'none',
+                            resize: 'none',
+                            maxHeight: '200px',
+                            minHeight: '24px',
+                            overflowY: input.length > 0 ? 'auto' : 'hidden',
+                            fontSize: '1rem',
+                            fontFamily: 'inherit',
+                            lineHeight: '1.5',
+                            padding: '8px 0', // Vertical padding fix
+                            marginBottom: '1px'
+                        }}
+                        rows={1}
+                    />
 
                     {isSupported && (
                         <button
@@ -362,14 +398,15 @@ export default function InputArea({ onSend, loading, onStop }) {
                             style={{
                                 background: 'none',
                                 border: 'none',
-                                padding: '8px',
+                                padding: '6px',
                                 cursor: 'pointer',
                                 color: isRecording ? '#ff4444' : 'var(--text-secondary)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 transition: 'color 0.2s',
-                                position: 'relative'
+                                position: 'relative',
+                                marginBottom: '4px'
                             }}
                             onMouseEnter={(e) => !isRecording && (e.currentTarget.style.color = 'var(--text-main)')}
                             onMouseLeave={(e) => !isRecording && (e.currentTarget.style.color = 'var(--text-secondary)')}
@@ -384,46 +421,24 @@ export default function InputArea({ onSend, loading, onStop }) {
                         </button>
                     )}
 
-                    <textarea
-                        ref={textareaRef}
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder="Message Chat AI..."
-                        style={{
-                            flex: 1,
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            color: 'var(--text-main)',
-                            outline: 'none',
-                            outline: 'none',
-                            resize: 'none',
-                            maxHeight: '200px',
-                            minHeight: '24px',
-                            overflowY: input.length > 0 ? 'auto' : 'hidden', // Show scrollbar only when needed
-                            fontSize: '1rem',
-                            fontFamily: 'inherit',
-                            marginLeft: '4px',
-                            lineHeight: '1.5'
-                        }}
-                        rows={1}
-                    />
                     <button
                         onClick={loading ? onStop : handleSubmit}
                         disabled={!loading && !input.trim() && !image}
                         style={{
                             background: loading ? 'transparent' : 'var(--primary-color)',
                             border: loading ? '2px solid var(--text-main)' : 'none',
-                            borderRadius: loading ? '50%' : '50%',
+                            borderRadius: '50%',
                             width: '32px',
                             height: '32px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            marginLeft: '10px',
+                            marginLeft: '4px', // Reduced margin
                             cursor: (loading || input.trim() || image) ? 'pointer' : 'default',
                             opacity: (loading || input.trim() || image) ? 1 : 0.5,
                             transition: 'all 0.2s',
+                            flexShrink: 0,
+                            marginBottom: '4px'
                         }}
                     >
                         {loading ? (
@@ -439,5 +454,4 @@ export default function InputArea({ onSend, loading, onStop }) {
         </div>
     );
 }
-
 

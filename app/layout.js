@@ -11,40 +11,71 @@ export const viewport = {
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
     { media: '(prefers-color-scheme: dark)', color: '#131314' },
   ],
+  interactiveWidget: 'resizes-content',
 };
 
 export const metadata = {
-  metadataBase: new URL('https://promptly-ai.vercel.app'), // Replace with actual domain
+  metadataBase: new URL('https://promptly-ai.vercel.app'),
+
   title: {
-    default: 'Promptly AI - Smart Assistant',
+    default: 'Promptly AI – Gemini-Powered AI Chat Assistant',
     template: '%s | Promptly AI',
   },
-  description: 'Experience the future of communication with Promptly AI. Powered by advanced Gemini models, featuring code highlighting, persistent history, and a beautiful dark mode UI.',
-  keywords: ['AI', 'Chat', 'Gemini', 'Promptly AI', 'Assistant'],
-  authors: [{ name: 'Lokesh' }],
-  creator: 'Promptly AI Team',
+
+  description:
+    'Promptly AI is a fast, secure Gemini-powered AI chat assistant for coding, writing, reasoning, and productivity. A powerful ChatGPT alternative with history, dark mode, and code highlighting.',
+
+  keywords: [
+    'AI chat assistant',
+    'Gemini AI chat',
+    'ChatGPT alternative',
+    'AI coding assistant',
+    'AI chatbot web app',
+    'Promptly AI',
+    'free AI chat',
+    'AI for developers',
+  ],
+
+  authors: [{ name: 'Lokesh Prajapati' }],
+  creator: 'Promptly AI',
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-snippet': -1,
+      'max-image-preview': 'large',
+      'max-video-preview': -1,
+    },
+  },
+
+  alternates: {
+    canonical: '/',
+  },
+
   openGraph: {
     type: 'website',
-    locale: 'en_US',
     url: '/',
-    title: 'Promptly AI - Your Intelligent Companion',
-    description: 'Chat with consistency. Save your history. Generate code. All in one premium interface.',
+    title: 'Promptly AI – Gemini-Powered AI Chat Assistant',
+    description:
+      'Chat smarter with Promptly AI. Gemini-powered AI assistant for coding, writing, and productivity.',
     siteName: 'Promptly AI',
+    locale: 'en_US',
   },
+
   twitter: {
     card: 'summary_large_image',
-    title: 'Promptly AI - Smart Assistant',
-    description: 'Experience the future of communication with advanced AI.',
+    title: 'Promptly AI – Gemini AI Chat Assistant',
+    description:
+      'Fast, secure, and powerful AI chat assistant built with Gemini.',
     creator: '@lokesh',
   },
+
   icons: {
-    icon: [
-      { url: '/icon.png?v=1', type: 'image/png' },
-    ],
-    shortcut: ['/icon.png?v=1'],
-    apple: [
-      { url: '/icon.png?v=1' },
-    ],
+    icon: [{ url: '/icon.png', type: 'image/png' }],
+    apple: [{ url: '/icon.png' }],
   },
 };
 
@@ -61,7 +92,7 @@ export default function RootLayout({ children }) {
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} style={{ margin: 0, padding: 0, overflow: 'hidden' }}>
         <Providers>
-          <div className="layout-container" style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden' }}>
+          <div className="layout-container" style={{ display: 'flex', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
             <Toaster position="top-center" richColors theme="system" />
             <Sidebar />
             <main style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
@@ -71,6 +102,25 @@ export default function RootLayout({ children }) {
             </main>
           </div>
         </Providers>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              name: "Promptly AI",
+              applicationCategory: "AIApplication",
+              operatingSystem: "Web",
+              description:
+                "Gemini-powered AI chat assistant for coding, writing, and productivity.",
+              url: "https://promptly-ai.vercel.app",
+              author: {
+                "@type": "Person",
+                name: "Lokesh Prajapati",
+              },
+            }),
+          }}
+        />
       </body>
     </html>
   );
