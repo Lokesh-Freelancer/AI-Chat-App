@@ -4,15 +4,20 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const router = useRouter();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
+        setError('');
+
         try {
             const res = await signIn('credentials', {
                 email,
@@ -20,18 +25,22 @@ export default function LoginPage() {
                 redirect: false,
             });
 
-            if (res.error) {
+            if (res?.error) {
                 toast.error('Invalid credentials');
                 setError('Invalid credentials');
+                setLoading(false);
                 return;
             }
 
             router.push('/');
             router.refresh();
         } catch (err) {
-            console.log(err);
+            console.error(err);
+            toast.error('Something went wrong');
+            setLoading(false);
         }
     };
+
 
     return (
         <div style={{
@@ -43,7 +52,7 @@ export default function LoginPage() {
             color: 'var(--text-main)',
         }}>
             <div style={{
-                maxWidth: '400px',
+                maxWidth: '300px',
                 width: '100%',
                 padding: '2rem',
                 backgroundColor: 'var(--surface-color)',
@@ -52,7 +61,7 @@ export default function LoginPage() {
             }}>
                 <h1 style={{ marginBottom: '0.5rem', fontSize: '1.8rem', textAlign: 'center', fontWeight: 'bold', color: 'var(--primary-color)' }}>Promptly AI</h1>
                 <h2 style={{ marginBottom: '1.5rem', fontSize: '1.1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Welcome Back</h2>
-                {error && <div style={{ color: '#ff6b6b', marginBottom: '1rem' }}>{error}</div>}
+
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <input
                         type="email"
@@ -86,6 +95,7 @@ export default function LoginPage() {
                         }}
                         required
                     />
+                    {error && <div style={{ color: '#ff6b6b', marginTop: '1rem' }}>{error}</div>}
                     <button
                         type="submit"
                         style={{
@@ -98,8 +108,9 @@ export default function LoginPage() {
                             cursor: 'pointer',
                             fontSize: '1rem',
                         }}
+                        disabled={loading}
                     >
-                        Login
+                        {loading ? 'Logging in...' : 'Login'}
                     </button>
                 </form>
                 <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>

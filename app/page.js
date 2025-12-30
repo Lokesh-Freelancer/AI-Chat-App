@@ -140,7 +140,8 @@ function ChatContent() {
 
         setIsSending(true);
 
-        setMessages(prev => [...prev, { id: 'initial', role: 'user', text, image }]);
+        const userMsgId = Date.now();
+        setMessages(prev => [...prev, { id: userMsgId, role: 'user', text, image }]);
 
 
         let status = "Thinking...";

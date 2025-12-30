@@ -39,10 +39,9 @@ export const metadata = {
   },
   icons: {
     icon: [
-      { url: '/favicon.ico?v=1' },
       { url: '/icon.png?v=1', type: 'image/png' },
     ],
-    shortcut: ['/favicon.ico?v=1'],
+    shortcut: ['/icon.png?v=1'],
     apple: [
       { url: '/icon.png?v=1' },
     ],
@@ -59,7 +58,7 @@ import { Toaster } from 'sonner';
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className} style={{ margin: 0, padding: 0, overflow: 'hidden' }}>
         <Providers>
           <div className="layout-container" style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden' }}>

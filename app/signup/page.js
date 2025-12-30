@@ -67,7 +67,7 @@ export default function SignupPage() {
             color: 'var(--text-main)',
         }}>
             <div style={{
-                maxWidth: '400px',
+                maxWidth: '300px',
                 width: '100%',
                 padding: '2rem',
                 backgroundColor: 'var(--surface-color)',
@@ -76,7 +76,7 @@ export default function SignupPage() {
             }}>
                 <h1 style={{ marginBottom: '0.5rem', fontSize: '1.8rem', textAlign: 'center', fontWeight: 'bold', color: 'var(--primary-color)' }}>Promptly AI</h1>
                 <h2 style={{ marginBottom: '1.5rem', fontSize: '1.1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Create Account</h2>
-                {error && <div style={{ color: '#ff6b6b', marginBottom: '1rem' }}>{error}</div>}
+
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <input
                         type="text"
@@ -126,6 +126,7 @@ export default function SignupPage() {
                         }}
                         required
                     />
+                    {error && <div style={{ color: '#ff6b6b', marginTop: '1rem' }}>{error}</div>}
                     <button
                         type="submit"
                         disabled={loading}

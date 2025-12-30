@@ -339,6 +339,10 @@ body {
   color: var(--text-main);
 }
 
+.message-content.user-msg {
+  flex-direction: column;
+}
+
 /* --- Mobile Responsiveness --- */
 @media (max-width: 1024px) {
   .mobile-header {
@@ -401,7 +405,7 @@ body {
 
   /* Improved side spacing for bubbles */
   .message-content {
-    max-width: 92% !important;
+    max-width: 100% !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
   }

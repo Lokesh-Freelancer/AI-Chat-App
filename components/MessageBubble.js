@@ -2,57 +2,236 @@ import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import remarkGfm from 'remark-gfm';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+
+import { franc } from 'franc-min';
 
 export default function MessageBubble({ message, isLast, loading }) {
     const isUser = message.role === 'user';
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [isSupported, setIsSupported] = useState(false);
+    const utteranceRef = useRef(null);
 
     // Check if Speech Synthesis is supported
-    useState(() => {
+    useEffect(() => {
         if (typeof window !== 'undefined' && window.speechSynthesis) {
             setIsSupported(true);
         }
+        // Cleanup on unmount
+        return () => {
+            shouldSpeakRef.current = false;
+            window.speechSynthesis.cancel();
+        };
     }, []);
 
+    // Ref to control recursive chunk speaking
+    const shouldSpeakRef = useRef(false);
+
     const speakMessage = () => {
-        if (!isSupported) {
-            alert('Text-to-speech is not supported in your browser.');
-            return;
-        }
+        try {
+            if (!isSupported) {
+                console.warn('Speech synthesis not supported');
+                alert('Text-to-speech is not supported in your browser.');
+                return;
+            }
 
-        // Stop if already speaking
-        if (isSpeaking) {
+            // Stop if already speaking
+            if (isSpeaking) {
+                console.log('Stopping speech');
+                shouldSpeakRef.current = false; // Signal to stop recursion
+                window.speechSynthesis.cancel();
+                setIsSpeaking(false);
+                return;
+            }
+
+            // Clean text for speech
+            const textToSpeak = message.text
+                .replace(/```[\s\S]*?```/g, '') // Remove code blocks
+                .replace(/`[^`]+`/g, '') // Remove inline code
+                .replace(/[#*_~]/g, '') // Remove markdown symbols
+                .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // Convert links to text
+                .trim();
+
+            if (!textToSpeak) {
+                console.warn('No text to speak');
+                alert('No text to speak.');
+                return;
+            }
+
+            console.log('Preparing to speak (chunked)...');
+
+            // Language detection (do once for consistency)
+            let langCode = 'und';
+            try {
+                langCode = franc(textToSpeak, { minLength: 3 });
+                console.log('Detected language code:', langCode);
+            } catch (err) {
+                console.error('Language detection failed:', err);
+                langCode = 'eng';
+            }
+
+            const LANGUAGE_MAP = {
+                // Indian Languages
+                'hin': 'hi-IN', // Hindi
+                'ben': 'bn-IN', // Bengali
+                'guj': 'gu-IN', // Gujarati
+                'mar': 'mr-IN', // Marathi
+                'tam': 'ta-IN', // Tamil
+                'tel': 'te-IN', // Telugu
+                'kan': 'kn-IN', // Kannada
+                'mal': 'ml-IN', // Malayalam
+                'pan': 'pa-IN', // Punjabi
+                'urd': 'ur-IN', // Urdu
+
+                // Asian Languages
+                'cmn': 'zh-CN', // Mandarin Chinese
+                'zho': 'zh-CN', // Chinese
+                'jpn': 'ja-JP', // Japanese
+                'kor': 'ko-KR', // Korean
+                'ind': 'id-ID', // Indonesian
+                'tha': 'th-TH', // Thai
+                'vie': 'vi-VN', // Vietnamese
+
+                // European Languages
+                'eng': 'en-US', // English
+                'spa': 'es-ES', // Spanish
+                'fra': 'fr-FR', // French
+                'deu': 'de-DE', // German
+                'ita': 'it-IT', // Italian
+                'por': 'pt-PT', // Portuguese
+                'rus': 'ru-RU', // Russian
+                'nld': 'nl-NL', // Dutch
+                'pol': 'pl-PL', // Polish
+                'tur': 'tr-TR', // Turkish
+                'swe': 'sv-SE', // Swedish
+                'dan': 'da-DK', // Danish
+                'fin': 'fi-FI', // Finnish
+                'nor': 'nb-NO', // Norwegian
+                'ell': 'el-GR', // Greek
+                'hun': 'hu-HU', // Hungarian
+                'ces': 'cs-CZ', // Czech
+                'ukr': 'uk-UA', // Ukrainian
+
+                // Middle Eastern / African
+                'arb': 'ar-SA', // Arabic
+                'heb': 'he-IL', // Hebrew
+                'fas': 'fa-IR', // Persian
+                'swh': 'sw-KE', // Swahili
+            };
+
+            const targetLang = LANGUAGE_MAP[langCode] || 'en-US';
+
+            // Voice selection
+            const voices = window.speechSynthesis.getVoices();
+            let selectedVoice = null;
+            if (voices.length > 0) {
+                selectedVoice = voices.find(v => v.lang === targetLang) || voices.find(v => v.lang.startsWith(targetLang.split('-')[0]));
+            }
+
+            // Chunking Logic
+            // Split by punctuation: . ? ! : ; newline, Hindi Danda (।), and CJK punctuation (。？！，；：)
+            // We use a regex with capturing group to keep delimiters
+            const splitRegex = /([.?!:;\n\u0964\u3002\uFF1F\uFF01\uFF0C\uFF1B\uFF1A])/;
+            const rawSegments = textToSpeak.split(splitRegex);
+
+            // Recombine segments into chunks of reasonable size
+            const chunks = [];
+            let currentChunk = '';
+
+            for (let i = 0; i < rawSegments.length; i++) {
+                const segment = rawSegments[i];
+
+                // If segment is just a delimiter, append to current chunk and push
+                if (splitRegex.test(segment)) {
+                    currentChunk += segment;
+                    // Use a soft limit to avoid cutting sentences (e.g. "Mr." or "e.g.")
+                    // But generally, a delimiter usually ends a chunk if it's long enough
+                    if (currentChunk.trim().length > 0) {
+                        chunks.push(currentChunk.trim());
+                        currentChunk = '';
+                    }
+                } else {
+                    // It's text. Check if adding it exceeds limit
+                    if (currentChunk.length + segment.length > 200) {
+                        // If current chunk is not empty, push it first
+                        if (currentChunk.trim().length > 0) {
+                            chunks.push(currentChunk.trim());
+                            currentChunk = '';
+                        }
+                    }
+                    currentChunk += segment;
+                }
+            }
+            // Push remaining
+            if (currentChunk.trim().length > 0) {
+                chunks.push(currentChunk.trim());
+            }
+
+            console.log('Generated chunks:', chunks);
+
+            shouldSpeakRef.current = true;
+            setIsSpeaking(true);
+
+            let currentChunkIndex = 0;
+
+            const speakNextChunk = () => {
+                if (!shouldSpeakRef.current) return;
+
+                if (currentChunkIndex >= chunks.length) {
+                    setIsSpeaking(false);
+                    shouldSpeakRef.current = false;
+                    return;
+                }
+
+                const chunkText = chunks[currentChunkIndex];
+                if (!chunkText) {
+                    currentChunkIndex++;
+                    speakNextChunk();
+                    return;
+                }
+
+                const utterance = new SpeechSynthesisUtterance(chunkText);
+                utteranceRef.current = utterance; // Prevent GC
+                utterance.lang = targetLang;
+                if (selectedVoice) utterance.voice = selectedVoice;
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+
+                utterance.onend = () => {
+                    currentChunkIndex++;
+                    speakNextChunk();
+                };
+
+                utterance.onerror = (e) => {
+                    console.error('Chunk speech error:', e);
+                    // On error, try to skip to next chunk instead of stopping completely
+                    if (e.error !== 'interrupted') { // Interrupted usually means user cancelled
+                        currentChunkIndex++;
+                        speakNextChunk();
+                    } else {
+                        setIsSpeaking(false);
+                        shouldSpeakRef.current = false;
+                    }
+                };
+
+                console.log(`Speaking chunk ${currentChunkIndex + 1}/${chunks.length}:`, chunkText.substring(0, 20) + '...');
+                window.speechSynthesis.speak(utterance);
+            };
+
+            // Cancel any current speech before starting
             window.speechSynthesis.cancel();
+
+            // Start speaking first chunk with small delay to ensure cancel processed
+            setTimeout(() => {
+                if (shouldSpeakRef.current) speakNextChunk();
+            }, 50);
+
+        } catch (error) {
+            console.error('speakMessage error:', error);
             setIsSpeaking(false);
-            return;
+            shouldSpeakRef.current = false;
         }
-
-        // Clean text for speech (remove markdown formatting)
-        const textToSpeak = message.text
-            .replace(/```[\s\S]*?```/g, '') // Remove code blocks
-            .replace(/`[^`]+`/g, '') // Remove inline code
-            .replace(/[#*_~]/g, '') // Remove markdown symbols
-            .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // Convert links to text
-            .trim();
-
-        if (!textToSpeak) {
-            alert('No text to speak.');
-            return;
-        }
-
-        const utterance = new SpeechSynthesisUtterance(textToSpeak);
-        utterance.lang = 'en-US';
-        utterance.rate = 1.0;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
-
-        utterance.onstart = () => setIsSpeaking(true);
-        utterance.onend = () => setIsSpeaking(false);
-        utterance.onerror = () => setIsSpeaking(false);
-
-        window.speechSynthesis.speak(utterance);
     };
 
     const CopyButton = ({ text }) => {
@@ -125,8 +304,35 @@ export default function MessageBubble({ message, isLast, loading }) {
 
     // Determine if we should show the speaker icon
     // Hide if it's the last message AND loading is true (currently generating)
-    const isTyping = isLast && loading;
-    const showSpeaker = !isUser && isSupported && message.text && !isTyping;
+    // const isTyping = isLast && loading;
+    // const showSpeaker = !isUser && isSupported && message.text && !isTyping;
+
+    const [showSpeakerDelay, setShowSpeakerDelay] = useState(false);
+
+    const isAiMessage = !isUser;
+    const isGenerationComplete = isLast && !loading;
+
+    // Calculate if we should show speaker (ignoring delay)
+    // currently only showing on last message as per user's previous code
+    const shouldShowSpeaker =
+        isAiMessage &&
+        isSupported &&
+        isGenerationComplete &&
+        message.text?.trim().length > 0;
+
+    useEffect(() => {
+        if (shouldShowSpeaker) {
+            const timer = setTimeout(() => {
+                setShowSpeakerDelay(true);
+            }, 2000); // 2 second delay
+            return () => clearTimeout(timer);
+        } else {
+            setShowSpeakerDelay(false);
+        }
+    }, [shouldShowSpeaker]);
+
+    const showSpeaker = shouldShowSpeaker && showSpeakerDelay;
+
 
     return (
         <div style={{
@@ -146,49 +352,13 @@ export default function MessageBubble({ message, isLast, loading }) {
                 color: 'var(--text-main)',
                 lineHeight: '1.6',
                 fontSize: '1rem',
+                display: 'flex',
+                alignItems: 'flex-end',
                 borderTopRightRadius: isUser ? '4px' : '18px',
                 borderTopLeftRadius: isUser ? '18px' : '4px',
                 overflowWrap: 'break-word',
                 position: 'relative'
             }}>
-                {/* Speaker button for AI messages */}
-                {showSpeaker && (
-                    <button
-                        onClick={speakMessage}
-                        className={isSpeaking ? 'speaker-active' : ''}
-                        style={{
-                            position: 'absolute',
-                            top: '8px',
-                            right: '8px',
-                            background: 'var(--surface-color)',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '6px',
-                            padding: '6px',
-                            cursor: 'pointer',
-                            color: isSpeaking ? 'var(--primary-color)' : 'var(--text-secondary)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'all 0.2s',
-                            zIndex: 10
-                        }}
-                        onMouseEnter={(e) => !isSpeaking && (e.currentTarget.style.color = 'var(--text-main)')}
-                        onMouseLeave={(e) => !isSpeaking && (e.currentTarget.style.color = 'var(--text-secondary)')}
-                        title={isSpeaking ? 'Stop speaking' : 'Read aloud'}
-                    >
-                        {isSpeaking ? (
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="6" y="4" width="4" height="16"></rect>
-                                <rect x="14" y="4" width="4" height="16"></rect>
-                            </svg>
-                        ) : (
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                            </svg>
-                        )}
-                    </button>
-                )}
                 {message.image && typeof message.image === 'string' && (
                     <div style={{ marginBottom: '12px' }}>
                         {message.image.startsWith('data:application/pdf') ? (
@@ -288,9 +458,6 @@ export default function MessageBubble({ message, isLast, loading }) {
                         onClick={speakMessage}
                         className={isSpeaking ? 'speaker-active' : ''}
                         style={{
-                            position: 'absolute',
-                            top: '8px',
-                            right: '8px',
                             background: 'var(--surface-color)',
                             border: '1px solid var(--border-color)',
                             borderRadius: '6px',
@@ -301,7 +468,8 @@ export default function MessageBubble({ message, isLast, loading }) {
                             alignItems: 'center',
                             justifyContent: 'center',
                             transition: 'all 0.2s',
-                            zIndex: 10
+                            zIndex: 10,
+                            marginBottom: '16px'
                         }}
                         onMouseEnter={(e) => !isSpeaking && (e.currentTarget.style.color = 'var(--text-main)')}
                         onMouseLeave={(e) => !isSpeaking && (e.currentTarget.style.color = 'var(--text-secondary)')}

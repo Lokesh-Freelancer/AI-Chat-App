@@ -157,6 +157,15 @@ export default function InputArea({ onSend, loading, onStop }) {
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
+    // Auto-resize textarea
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = '24px'; // Reset height
+            const scrollHeight = textareaRef.current.scrollHeight;
+            textareaRef.current.style.height = Math.min(scrollHeight, 200) + 'px'; // Limit max height
+        }
+    }, [input]);
+
 
 
     const onEmojiClick = (emojiData, event) => {
@@ -387,12 +396,15 @@ export default function InputArea({ onSend, loading, onStop }) {
                             border: 'none',
                             color: 'var(--text-main)',
                             outline: 'none',
+                            outline: 'none',
                             resize: 'none',
-                            height: '24px',
                             maxHeight: '200px',
+                            minHeight: '24px',
+                            overflowY: input.length > 0 ? 'auto' : 'hidden', // Show scrollbar only when needed
                             fontSize: '1rem',
                             fontFamily: 'inherit',
-                            marginLeft: '4px'
+                            marginLeft: '4px',
+                            lineHeight: '1.5'
                         }}
                         rows={1}
                     />
