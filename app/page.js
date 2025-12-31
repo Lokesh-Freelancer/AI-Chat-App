@@ -230,10 +230,7 @@ function ChatContent() {
                     signal: abortControllerRef.current.signal
                 });
                 const data = await response.json();
-
-
-
-
+                setStatusMessage(null);
                 const fullText = data.reply;
                 const startTime = Date.now();
                 const typingSpeed = 15;

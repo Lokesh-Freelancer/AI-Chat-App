@@ -79,6 +79,8 @@ export const metadata = {
   },
 };
 
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "./api/auth/[...nextauth]/route";
 import Providers from '@/components/Providers';
 import Sidebar from '@/components/Sidebar';
 import MobileHeader from '@/components/MobileHeader';
@@ -87,14 +89,16 @@ import GuestHeader from '@/components/GuestHeader';
 
 import { Toaster } from 'sonner';
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const session = await getServerSession(authOptions);
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} style={{ margin: 0, padding: 0, overflow: 'hidden' }}>
-        <Providers>
+        <Providers session={session}>
           <div className="layout-container" style={{ display: 'flex', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
             <Toaster position="top-center" richColors theme="system" />
-            <Sidebar />
+            {session && <Sidebar />}
             <main style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
               <GuestHeader />
               <MobileHeader />
