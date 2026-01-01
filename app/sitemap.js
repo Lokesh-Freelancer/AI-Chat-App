@@ -1,5 +1,5 @@
 export default function sitemap() {
-    const baseUrl = 'https://your-chat-domain.com'; // Update this when you deploy
+    const baseUrl = 'https://promptly-devgpt.vercel.app/'; // Update this when you deploy
 
     return [
         {

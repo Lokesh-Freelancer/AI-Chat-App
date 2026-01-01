@@ -544,3 +544,126 @@ body {
     margin-top: 4px;
   }
 }
+
+/* --- Refactored Components Styles --- */
+
+/* Sidebar */
+.sidebar-container {
+  height: 100%;
+  background-color: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  border-right: 1px solid var(--border-color);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 100;
+  overflow-x: hidden;
+}
+
+.sidebar-container.collapsed {
+  padding: 10px 5px;
+  overflow-x: visible;
+}
+
+.sidebar-header {
+  padding: 10px 5px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  min-height: 48px;
+  position: relative;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 36px 10px 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background-color: var(--input-bg);
+  color: var(--text-main);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  border-color: var(--primary-color);
+}
+
+.search-input:blur {
+  border-color: var(--border-color);
+}
+
+.chat-item {
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--text-main);
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  transition: background-color 0.2s;
+}
+
+.chat-item.collapsed {
+  padding: 10px;
+  justify-content: center;
+}
+
+.chat-item.expanded {
+  justify-content: space-between;
+}
+
+.chat-item.active {
+  background-color: var(--surface-color);
+}
+
+.chat-item:hover {
+  background-color: var(--surface-color);
+}
+
+/* Message Bubble Speaker Button */
+.speaker-btn {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 6px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  z-index: 10;
+  margin-bottom: 16px;
+}
+
+.speaker-btn:hover {
+  color: var(--text-main);
+}
+
+
+/* Theme Toggle */
+.theme-toggle-btn {
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.5rem;
+  cursor: pointer;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  transition: all 0.2s;
+}
+
+.theme-toggle-btn:hover {
+  background-color: var(--surface-color);
+  color: var(--primary-color);
+}
