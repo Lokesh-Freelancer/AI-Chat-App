@@ -9,10 +9,10 @@ export default function ClientThemeHandler() {
     const { setTheme } = useTheme();
 
     useEffect(() => {
-        if (status === 'unauthenticated') {
-            setTheme('light');
+        if (status === 'authenticated') {
+            setTheme('dark');
         }
-    }, [status, setTheme]);
+    }, [status]);
 
     return null;
 }
