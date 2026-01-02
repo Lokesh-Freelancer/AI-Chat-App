@@ -5,13 +5,14 @@ import { useRouter, useParams, usePathname } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import ThemeToggle from './ThemeToggle';
+import SidebarChat from './SidebarChat';
 
 export default function Sidebar() {
     const { data: session, status } = useSession();
     const [chats, setChats] = useState([]);
     const [editingChatId, setEditingChatId] = useState(null);
     const [editValue, setEditValue] = useState('');
-    const [hoveredChatId, setHoveredChatId] = useState(null);
+    // hoveredChatId moved to SidebarChat
     const [isCreating, setIsCreating] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -19,7 +20,7 @@ export default function Sidebar() {
     const [isHeaderHovered, setIsHeaderHovered] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [showProfileMenu, setShowProfileMenu] = useState(false);
-    const editInputRef = useRef(null);
+    // editInputRef moved to SidebarChat
     const searchInputRef = useRef(null);
     const router = useRouter();
     const params = useParams();
@@ -74,11 +75,7 @@ export default function Sidebar() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
-    useEffect(() => {
-        if (editingChatId && editInputRef.current) {
-            editInputRef.current.focus();
-        }
-    }, [editingChatId]);
+    // Removed editInputRef effect
 
     const fetchChats = async () => {
         try {
@@ -117,11 +114,7 @@ export default function Sidebar() {
         if (isMobileOpen) setIsMobileOpen(false);
     };
 
-    const startEditing = (e, chat) => {
-        e.stopPropagation();
-        setEditingChatId(chat.id);
-        setEditValue(chat.title);
-    };
+    // Removed startEditing helper (inline now)
 
     const cancelEditing = () => {
         setEditingChatId(null);
@@ -147,13 +140,7 @@ export default function Sidebar() {
         }
     };
 
-    const handleKeyDown = (e, chatId) => {
-        if (e.key === 'Enter') {
-            saveEditing(chatId);
-        } else if (e.key === 'Escape') {
-            cancelEditing();
-        }
-    };
+    // Removed handleKeyDown (moved to child)
 
     const confirmDelete = async (e, chatId) => {
         e.stopPropagation();
@@ -234,34 +221,18 @@ export default function Sidebar() {
             />
 
             <aside
-                className={isMobileOpen ? 'mobile-open' : ''}
+                className={`sidebar-container ${isMobileOpen ? 'mobile-open' : ''} ${showCollapsed ? 'collapsed' : ''}`}
                 style={{
-                    height: '100%',
                     width: showCollapsed ? '70px' : '260px',
-                    backgroundColor: 'var(--sidebar-bg)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    padding: '10px',
-                    borderRight: '1px solid var(--border-color)',
-                    transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    flexShrink: 0,
-                    overflowX: showCollapsed ? 'visible' : 'hidden',
-                    position: 'relative',
-                    zIndex: 100
                 }}
             >
 
                 <div
                     onMouseEnter={() => setIsHeaderHovered(true)}
                     onMouseLeave={() => setIsHeaderHovered(false)}
+                    className="sidebar-header"
                     style={{
-                        padding: '10px 5px',
-                        display: 'flex',
-                        alignItems: 'center',
                         justifyContent: showCollapsed ? 'center' : 'space-between',
-                        marginBottom: '15px',
-                        minHeight: '48px',
-                        position: 'relative'
                     }}
                 >
                     {showCollapsed ? (
@@ -448,19 +419,7 @@ export default function Sidebar() {
                                             placeholder="Search chats..."
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
-                                            style={{
-                                                width: '100%',
-                                                padding: '10px 36px 10px 36px',
-                                                borderRadius: '8px',
-                                                border: '1px solid var(--border-color)',
-                                                backgroundColor: 'var(--input-bg)',
-                                                color: 'var(--text-main)',
-                                                fontSize: '0.9rem',
-                                                outline: 'none',
-                                                transition: 'border-color 0.2s'
-                                            }}
-                                            onFocus={(e) => e.target.style.borderColor = 'var(--primary-color)'}
-                                            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                                            className="search-input"
                                         />
 
                                         {/* Clear Button */}
@@ -549,90 +508,26 @@ export default function Sidebar() {
                                         }}>{label}</p>
                                     )}
                                     {list.map(chat => (
-                                        <div
+                                        <SidebarChat
                                             key={chat.id}
-                                            onClick={() => {
+                                            chat={chat}
+                                            isActive={currentChatId === chat.id}
+                                            isCollapsed={showCollapsed}
+                                            isEditing={editingChatId === chat.id}
+                                            editValue={editValue}
+                                            onEditChange={setEditValue}
+                                            onEditSubmit={() => saveEditing(chat.id)}
+                                            onEditCancel={cancelEditing}
+                                            onRenameClick={() => {
+                                                setEditingChatId(chat.id);
+                                                setEditValue(chat.title);
+                                            }}
+                                            onDeleteClick={(e) => confirmDelete(e, chat.id)} // Pass event to be safe, though component handles prop
+                                            onChatClick={() => {
                                                 router.push(`/c/${chat.id}`);
                                                 if (isMobileOpen) setIsMobileOpen(false);
                                             }}
-                                            onMouseEnter={() => setHoveredChatId(chat.id)}
-                                            onMouseLeave={() => setHoveredChatId(null)}
-                                            data-tooltip={showCollapsed ? chat.title : undefined}
-                                            className="chat-item-hover"
-                                            style={{
-                                                padding: showCollapsed ? '10px' : '10px 14px',
-                                                borderRadius: '10px',
-                                                cursor: 'pointer',
-                                                color: 'var(--text-main)',
-                                                fontSize: '0.9rem',
-                                                backgroundColor: currentChatId === chat.id ? 'var(--surface-color)' : 'transparent',
-                                                marginBottom: '4px',
-                                                position: 'relative',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: showCollapsed ? 'center' : 'space-between',
-                                                minHeight: '40px',
-                                            }}
-                                        >
-                                            {showCollapsed ? (
-                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: currentChatId === chat.id ? 1 : 0.6 }}>
-                                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                                                </svg>
-                                            ) : (
-                                                editingChatId === chat.id ? (
-                                                    <input
-                                                        ref={editInputRef}
-                                                        type="text"
-                                                        value={editValue}
-                                                        onChange={(e) => setEditValue(e.target.value)}
-                                                        onBlur={() => saveEditing(chat.id)}
-                                                        onKeyDown={(e) => handleKeyDown(e, chat.id)}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        style={{
-                                                            width: '100%',
-                                                            padding: '4px',
-                                                            borderRadius: '4px',
-                                                            border: '1px solid var(--primary-color)',
-                                                            backgroundColor: 'var(--input-bg)',
-                                                            color: 'var(--text-main)',
-                                                            fontSize: '0.9rem',
-                                                            outline: 'none'
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <>
-                                                        <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1, paddingRight: '10px' }}>
-                                                            {chat.title.charAt(0).toUpperCase() + chat.title.slice(1)}
-                                                        </div>
-
-                                                        {(hoveredChatId === chat.id || currentChatId === chat.id) && (
-                                                            <div style={{ display: 'flex', gap: '8px' }}>
-                                                                <button
-                                                                    onClick={(e) => startEditing(e, chat)}
-                                                                    title="Rename"
-                                                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: 0 }}
-                                                                >
-                                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                                                    </svg>
-                                                                </button>
-                                                                <button
-                                                                    onClick={(e) => confirmDelete(e, chat.id)}
-                                                                    title="Delete"
-                                                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: 0 }}
-                                                                >
-                                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                                        <polyline points="3 6 5 6 21 6"></polyline>
-                                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                                                    </svg>
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </>
-                                                )
-                                            )}
-                                        </div>
+                                        />
                                     ))}
                                 </div>
                             )

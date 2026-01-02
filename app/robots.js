@@ -5,6 +5,6 @@ export default function robots() {
             allow: '/',
             disallow: ['/api/', '/profile/'], // Hide API and private profile routes
         },
-        sitemap: 'https://your-chat-domain.com/sitemap.xml',
+        sitemap: 'https://promptly-devgpt.vercel.app/sitemap.xml',
     }
 }

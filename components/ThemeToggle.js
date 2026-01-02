@@ -17,18 +17,7 @@ export default function ThemeToggle({ showCollapsed = false }) {
         <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             data-tooltip={showCollapsed ? `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode` : undefined}
-            style={{
-                background: 'none',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                padding: '0.5rem',
-                cursor: 'pointer',
-                color: 'var(--text-main)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginLeft: 'auto', // Push to right if in flex container
-            }}
+            className="theme-toggle-btn"
             aria-label="Toggle Theme"
         >
             {theme === 'dark' ? (
